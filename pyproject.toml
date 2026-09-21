@@ -1,0 +1,25 @@
+# Workspace root, so every example can be run from here:
+#
+#   uv sync
+#   uv run tribunal judge "the dog ate my migration"
+#
+# Nothing is published from this file; it only ties the examples together and
+# gives them one shared virtualenv and one lockfile.
+
+[project]
+name = "jev-examples"
+version = "0.0.0"
+description = "Examples built on TypeSafe's System One models."
+requires-python = ">=3.12"
+dependencies = [
+    "excuse-tribunal",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["examples/*"]
+
+[tool.uv.sources]
+excuse-tribunal = { workspace = true }

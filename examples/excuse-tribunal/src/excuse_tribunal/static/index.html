@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Excuse Tribunal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/court.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%F0%9F%94%A8</text></svg>">
+</head>
+<body>
+<div class="wall">
+
+<header class="masthead">
+  <div class="seal" aria-hidden="true">
+    <span class="seal-top">the excuse</span>
+    <span class="seal-word">TRIBUNAL</span>
+    <span class="seal-bot">div. of petty failure</span>
+  </div>
+  <div class="masthead-text">
+    <h1>Bring your excuse before the bench.</h1>
+    <p>Jev hears twelve charges at once and returns a number for each. The
+      sentencing is done by forty lines of Python, which is the point.</p>
+  </div>
+</header>
+
+<main>
+  <form id="plea" class="sheet" autocomplete="off">
+    <div class="sheet-head">
+      <span class="form-no">form e&#8209;1</span>
+      <span class="sheet-title">statement of the accused</span>
+      <span class="copy-mark">carbon copy</span>
+    </div>
+
+    <label class="statement">
+      <span class="field-name">I say in my defence</span>
+      <textarea id="excuse" name="excuse" rows="3" maxlength="2000" required
+        placeholder="the train was cancelled, then my laptop died, then honestly I forgot"></textarea>
+    </label>
+
+    <div class="ruled">
+      <label><span class="field-name">I was supposed to</span>
+        <input id="context" name="context" maxlength="500" placeholder="ship the migration on Tuesday"></label>
+      <label><span class="field-name">I am telling this to</span>
+        <input id="audience" name="audience" maxlength="200" placeholder="my manager"></label>
+    </div>
+
+    <div class="actions">
+      <button type="submit" id="submit" class="gavel">Submit to the bench</button>
+      <button type="button" id="roll" class="plain">Deal me a plea</button>
+      <label class="sound"><input type="checkbox" id="sound" checked> courtroom audio</label>
+    </div>
+    <p class="hint">⌘/Ctrl + Enter files it. Every hearing goes on your record.</p>
+  </form>
+
+  <section id="deliberation" class="deliberating" hidden aria-live="polite">
+    <p class="ticker" id="ticker">the bench is reading</p>
+    <ul class="docket-lights" id="lights"></ul>
+  </section>
+
+  <section id="verdict" class="sheet verdict" hidden aria-live="polite"></section>
+
+  <p id="collapse" class="collapse" hidden></p>
+</main>
+
+<aside class="record" id="record" hidden>
+  <div class="record-head">
+    <h2>Prior offences</h2>
+    <button type="button" id="expunge" class="plain small">Expunge record</button>
+  </div>
+  <p class="record-stats" id="record-stats"></p>
+  <ol class="priors" id="priors"></ol>
+</aside>
+
+<footer>
+  <p>Runs on <a href="https://docs.typesafe.ai/models">Jev</a> via one
+    <a href="https://docs.typesafe.ai/patterns/fan-out">fan-out</a> request.
+    Same verdict logic as <code>tribunal judge</code> in your terminal.</p>
+</footer>
+
+</div>
+<script src="/static/court.js"></script>
+</body>
+</html>
