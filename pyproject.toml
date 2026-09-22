@@ -2,6 +2,7 @@
 #
 #   uv sync
 #   uv run tribunal judge "the dog ate my migration"
+#   uv run outbox check "just circling back on this, no rush!"
 #
 # Nothing is published from this file; it only ties the examples together and
 # gives them one shared virtualenv and one lockfile.
@@ -13,6 +14,7 @@ description = "Examples built on TypeSafe's System One models."
 requires-python = ">=3.12"
 dependencies = [
     "excuse-tribunal",
+    "outbox",
 ]
 
 [tool.uv]
@@ -23,3 +25,4 @@ members = ["examples/*"]
 
 [tool.uv.sources]
 excuse-tribunal = { workspace = true }
+outbox = { workspace = true }

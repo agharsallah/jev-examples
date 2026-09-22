@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outbox — a second opinion before you send</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/desk.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%9C%89%EF%B8%8F</text></svg>">
+</head>
+<body>
+<div class="desk">
+
+  <header class="masthead">
+    <div class="wordmark">
+      <span class="mark" aria-hidden="true">✉</span>
+      <div>
+        <h1>Outbox</h1>
+        <p>A second opinion before you hit send.</p>
+      </div>
+    </div>
+    <p class="credo">
+      <a href="https://docs.typesafe.ai/models">Jev</a> reads the draft once and returns numbers.
+      Everything after that — who it is for, what counts as a problem, whether to send it —
+      is ordinary Python you can read and argue with.
+    </p>
+  </header>
+
+  <main>
+    <!-- ------------------------------------------------ composer -->
+    <form id="composer" class="card compose" autocomplete="off">
+      <div class="card-head">
+        <span class="card-title">the draft</span>
+        <span class="card-note" id="charcount">0 characters</span>
+      </div>
+
+      <div class="paper">
+        <textarea id="draft" rows="9" maxlength="8000" required
+          placeholder="Hi Sam, just circling back on the migration doc from last week — I know you're super busy, no rush at all!! Sorry to be a pain…"></textarea>
+      </div>
+
+      <div class="meta">
+        <label>
+          <span class="field">going to</span>
+          <input id="to" maxlength="200" placeholder="my manager">
+        </label>
+        <label>
+          <span class="field">so that</span>
+          <input id="goal" maxlength="400" placeholder="the doc gets reviewed before Thursday">
+        </label>
+        <label>
+          <span class="field">over</span>
+          <select id="channel">
+            <option value="">unspecified</option>
+            <option value="email">email</option>
+            <option value="slack">slack</option>
+            <option value="pull request comment">PR comment</option>
+            <option value="text message">text message</option>
+            <option value="public post">public post</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="submit" id="send" class="primary">Read it</button>
+        <button type="button" id="sample" class="ghost">Try one of mine</button>
+        <label class="toggle">
+          <input type="checkbox" id="deep" checked>
+          <span>mark up the sentences <em>(a second request)</em></span>
+        </label>
+      </div>
+      <p class="hint">⌘ / Ctrl + Enter reads it.</p>
+    </form>
+
+    <!-- ------------------------------------------------ verdict -->
+    <section id="result" class="card verdict" hidden aria-live="polite">
+      <div class="verdict-head">
+        <div class="stamp" id="stamp">
+          <span class="stamp-word" id="verdictWord">—</span>
+          <span class="stamp-blurb" id="verdictBlurb"></span>
+        </div>
+        <div class="dial" id="dial">
+          <svg viewBox="0 0 120 120" role="img" aria-labelledby="dialLabel">
+            <title id="dialLabel">Send score</title>
+            <circle class="dial-track" cx="60" cy="60" r="52"></circle>
+            <circle class="dial-value" id="dialValue" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="dial-text">
+            <strong id="scoreValue">0</strong>
+            <span>send score</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chips">
+        <span class="chip" id="intentChip"></span>
+        <span class="chip risk" id="riskChip"></span>
+      </div>
+
+      <!-- reader switch: re-scores without another model call -->
+      <div class="switcher">
+        <div class="switcher-head">
+          <span class="card-title">read it as</span>
+          <span class="card-note" id="rescoreNote"></span>
+        </div>
+        <div class="pills" id="audiencePills" role="group" aria-label="Who is reading this"></div>
+        <p class="wants" id="wants"></p>
+      </div>
+
+      <div class="rails-head">
+        <span class="card-title">how it lands</span>
+        <span class="card-note"><b id="fitValue">—</b> fit · <span class="swatch band"></span> what this reader wants · <span class="swatch dot"></span> where the draft is</span>
+      </div>
+      <div class="rails" id="rails"></div>
+
+      <div id="findingsBlock">
+        <div class="card-head"><span class="card-title">findings</span></div>
+        <ul class="findings" id="findings"></ul>
+      </div>
+
+      <div id="markupBlock">
+        <div class="card-head">
+          <span class="card-title">sentence by sentence</span>
+          <span class="card-note" id="sentenceNote">every sentence, in one request</span>
+        </div>
+        <div class="paper marked" id="marked"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <p class="cost" id="cost"></p>
+    </section>
+
+    <div id="thinking" class="card thinking" hidden>
+      <div class="pulse"><span></span><span></span><span></span></div>
+      <p id="thinkingText">reading the whole draft…</p>
+    </div>
+
+    <div id="error" class="card error" hidden></div>
+  </main>
+
+  <footer>
+    <p>
+      Built on <a href="https://docs.typesafe.ai">TypeSafe</a>'s System One models.
+      The questions live in <code>questions.py</code>, the judgement in <code>review.py</code>,
+      and the bands each reader is scored against in <code>audience.py</code>.
+    </p>
+  </footer>
+</div>
+
+<script src="/static/desk.js"></script>
+</body>
+</html>
