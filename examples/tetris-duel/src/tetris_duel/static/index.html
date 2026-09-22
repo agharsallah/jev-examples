@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jev vs You — a self-playing well</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/arcade.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%F0%9F%95%B9%EF%B8%8F</text></svg>">
+</head>
+<body>
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<div class="arcade">
+
+  <header class="masthead">
+    <div class="wordmark">
+      <span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <div>
+        <h1>Jev <em>vs</em> You</h1>
+        <p>One well plays itself. The other one is your problem.</p>
+      </div>
+    </div>
+
+    <div class="setup">
+      <div class="levels" role="radiogroup" aria-label="Difficulty">
+        <button class="level" data-level="chill" role="radio" aria-checked="false">Chill</button>
+        <button class="level is-on" data-level="steady" role="radio" aria-checked="true">Steady</button>
+        <button class="level" data-level="ruthless" role="radio" aria-checked="false">Ruthless</button>
+      </div>
+      <button class="start" id="start">Start the match</button>
+    </div>
+    <p class="blurb" id="blurb"></p>
+  </header>
+
+  <main class="match">
+
+    <!-- ------------------------------------------------------ jev's well -->
+    <section class="player jev">
+      <div class="nameplate">
+        <span class="who">Jev</span>
+        <span class="tag" id="jevStatus">ready</span>
+      </div>
+      <div class="board">
+        <div class="well" id="jevWell" aria-label="Jev's well"></div>
+        <div class="stamp" id="jevStamp" hidden>topped out</div>
+      </div>
+      <div class="readout">
+        <div class="stat big"><span class="num" id="jevScore">0</span><span class="cap">points</span></div>
+        <div class="stat"><span class="num" id="jevLines">0</span><span class="cap">rows</span></div>
+        <div class="stat"><span class="num" id="jevPieces">0</span><span class="cap">pieces</span></div>
+        <div class="next"><span class="cap">next</span><div class="mini" id="jevNext"></div></div>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------- the middle -->
+    <section class="middle">
+      <div class="versus" id="versus">VS</div>
+      <div class="lead" id="lead">tap start</div>
+      <div class="keys">
+        <p class="cap">your keys</p>
+        <ul>
+          <li><kbd>←</kbd><kbd>→</kbd> move</li>
+          <li><kbd>↑</kbd> rotate</li>
+          <li><kbd>↓</kbd> soft drop</li>
+          <li><kbd>space</kbd> hard drop</li>
+          <li><kbd>P</kbd> pause</li>
+        </ul>
+      </div>
+      <div class="pad" aria-hidden="true">
+        <button data-key="left">←</button>
+        <button data-key="rotate">⟳</button>
+        <button data-key="right">→</button>
+        <button data-key="drop" class="wide">drop</button>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------- your well -->
+    <section class="player you">
+      <div class="nameplate">
+        <span class="who">You</span>
+        <span class="tag" id="youStatus">ready</span>
+      </div>
+      <div class="board">
+        <div class="well" id="youWell" aria-label="Your well"></div>
+        <div class="stamp" id="youStamp" hidden>topped out</div>
+      </div>
+      <div class="readout">
+        <div class="stat big"><span class="num" id="youScore">0</span><span class="cap">points</span></div>
+        <div class="stat"><span class="num" id="youLines">0</span><span class="cap">rows</span></div>
+        <div class="stat"><span class="num" id="youPieces">0</span><span class="cap">pieces</span></div>
+        <div class="next"><span class="cap">next</span><div class="mini" id="youNext"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ------------------------------------------------------- the thinking -->
+  <section class="thinking card" id="thinking">
+    <div class="card-head">
+      <span class="card-title">what Jev said about this piece</span>
+      <span class="card-note" id="modelNote">one request per piece</span>
+    </div>
+
+    <div class="thinking-body">
+      <div class="column">
+        <p class="chatter" id="chatter">Press start and Jev takes the left-hand well.</p>
+        <p class="pick" id="pick"></p>
+        <p class="overrule" id="overrule" hidden></p>
+      </div>
+
+      <div class="column bars" id="bars">
+        <p class="empty">The landings Jev weighed up will show up here.</p>
+      </div>
+
+      <div class="column meters">
+        <div class="meter">
+          <div class="meter-head"><span>danger</span><span id="dangerValue">—</span></div>
+          <div class="track"><div class="fill danger" id="dangerFill"></div></div>
+          <p class="meter-note" id="dangerNote">how much trouble the well is in</p>
+        </div>
+        <div class="meter">
+          <div class="meter-head"><span>clear rows now</span><span id="clearValue">—</span></div>
+          <div class="track"><div class="fill clear" id="clearFill"></div></div>
+        </div>
+        <div class="meter">
+          <div class="meter-head"><span>holding a well open</span><span id="wellValue">—</span></div>
+          <div class="track"><div class="fill hold" id="wellFill"></div></div>
+        </div>
+        <div class="meter">
+          <div class="meter-head"><span>confidence in the pick</span><span id="confValue">—</span></div>
+          <div class="track"><div class="fill conf" id="confFill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="error" id="error" hidden></p>
+  </section>
+
+  <footer>
+    <p>
+      Every piece on the left is one request to
+      <a href="https://docs.typesafe.ai/models">Jev</a>: a
+      <a href="https://docs.typesafe.ai/primitives/choice">Choice</a> over every legal landing,
+      a <a href="https://docs.typesafe.ai/primitives/score">Score</a> for how much trouble the well
+      is in, and two <a href="https://docs.typesafe.ai/primitives/noul">Nouls</a> about what to do
+      about it — all answered against one reading of the board.
+      The answer is a rotation and a column, which the piece then plays out: it turns, walks
+      across, and either falls or — when Jev's confidence clears the bar in
+      <code>pilot.py</code> — gets hard-dropped. Difficulty changes how much of each landing
+      Jev is shown, and whether the house rules may re-rank its answer. Both wells get the same pieces and the same
+      gravity; points come from cleared rows only.
+    </p>
+  </footer>
+</div>
+
+<div class="finale" id="finale" hidden>
+  <div class="finale-card">
+    <p class="finale-kicker" id="finaleKicker">final score</p>
+    <h2 id="finaleTitle">Nice one!</h2>
+    <p class="finale-line" id="finaleLine"></p>
+    <button class="start" id="again">Run it back</button>
+  </div>
+</div>
+
+<script src="/static/arcade.js"></script>
+</body>
+</html>
