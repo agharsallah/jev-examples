@@ -28,6 +28,7 @@ class Move(BaseModel):
     piece: str = Field(min_length=1, max_length=1)
     next: str | None = Field(default=None, max_length=1)
     cleared: int = Field(default=0, ge=0)
+    since_bar: int | None = Field(default=None, ge=0, le=999)
     difficulty: str | None = None
     model: str | None = None
 
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
                     "gravity_ms": level.gravity_ms,
                     "sees": level.detail,
                     "house_rules": level.house_rules,
+                    "well_guard": level.well_guard,
                 }
                 for level in DIFFICULTIES
             ],
@@ -65,6 +67,7 @@ def create_app() -> FastAPI:
                 rows_cleared=request.cleared,
                 level_key=request.difficulty,
                 model=request.model,
+                since_bar=request.since_bar,
             )
         except GameOver:
             return JSONResponse({"game_over": True})

@@ -161,6 +161,7 @@ class Player {
     this.score = 0;
     this.lines = 0;
     this.placed = 0;
+    this.ms = 0; // how long this well has been in play
     this.index = 0;
     this.over = false;
     this.hold = 0; // ms of animation the clock has to wait for
@@ -188,6 +189,14 @@ class Player {
 
   rows() {
     return this.grid.map((row) => row.map((cell) => (cell ? "#" : ".")).join(""));
+  }
+
+  /** Pieces dealt since the last straight bar — one per bag, so the wait matters. */
+  sinceBar() {
+    for (let back = 1; back <= this.index; back++) {
+      if (this.supply.at(this.index - back) === "I") return back - 1;
+    }
+    return this.index;
   }
 
   /** Lock cells in, flash any full rows, and hand the score over after the flash. */
@@ -299,6 +308,7 @@ class Human extends Player {
 
   tick(dt) {
     if (this.over) return;
+    this.ms += dt;
     if (this.hold > 0) {
       this.hold -= dt;
       if (this.hold <= 0 && this.clearing) {
@@ -363,6 +373,7 @@ class Jev extends Player {
           piece: this.piece,
           next: this.next,
           cleared: this.lines,
+          since_bar: this.sinceBar(),
           difficulty: level,
         }),
       });
@@ -447,6 +458,7 @@ class Jev extends Player {
 
   tick(dt) {
     if (this.over) return;
+    this.ms += dt; // thinking counts: the well is still on the clock
     if (this.hold > 0) {
       this.hold -= dt;
       if (this.hold <= 0 && this.clearing) {
@@ -484,6 +496,12 @@ class Jev extends Player {
 /* ------------------------------------------------------------------ chrome */
 
 const $ = (id) => document.getElementById(id);
+
+/** Milliseconds as a scoreboard reads them. */
+const clock = (ms) => {
+  const total = Math.floor(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+};
 
 function setTag(el, text, klass) {
   el.textContent = text;
@@ -525,7 +543,8 @@ function showThinking(data, ms) {
     `<b>${data.piece}</b> → ${data.where} · chosen from <b>${data.menu_size}</b> legal landings` +
     (data.rows_cleared ? ` · clears <b>${data.rows_cleared}</b>` : "") +
     (data.torn ? " · <b>Jev is torn</b>" : "") +
-    (data.sure ? " · sure enough to <b>hard drop</b> it" : "");
+    (data.sure ? " · sure enough to <b>hard drop</b> it" : "") +
+    (data.guarding ? ` · holding <b>column ${data.guarding}</b> open` : "");
 
   const overrule = $("overrule");
   overrule.hidden = !data.overruled;
@@ -547,7 +566,14 @@ function showThinking(data, ms) {
   meter("danger", data.danger.value / 4, `${data.danger.value.toFixed(2)} / 4`);
   $("dangerNote").textContent = data.danger.level;
   meter("clear", data.clear_now, `${Math.round(data.clear_now * 100)}%`);
-  meter("well", data.holding_a_well, `${Math.round(data.holding_a_well * 100)}%`);
+  const slot = $("slotMeter");
+  slot.hidden = data.keep_slot === null || data.keep_slot === undefined;
+  if (!slot.hidden) {
+    meter("slot", data.keep_slot, `${Math.round(data.keep_slot * 100)}%`);
+    $("slotNote").textContent = data.guarding
+      ? `column ${data.guarding} is being kept clear for a four-row clear`
+      : "not worth waiting for a bar right now";
+  }
   meter("conf", data.confidence, `${Math.round(data.confidence * 100)}%`);
 
   const tokens = data.usage.input_tokens || 0;
@@ -571,6 +597,7 @@ const jev = new Jev("Jev", new Screen($("jevWell")), {
   score: $("jevScore"),
   lines: $("jevLines"),
   pieces: $("jevPieces"),
+  time: $("jevTime"),
   next: $("jevNext"),
   status: $("jevStatus"),
   stamp: $("jevStamp"),
@@ -580,6 +607,7 @@ const you = new Human("You", new Screen($("youWell")), {
   score: $("youScore"),
   lines: $("youLines"),
   pieces: $("youPieces"),
+  time: $("youTime"),
   next: $("youNext"),
   status: $("youStatus"),
   stamp: $("youStamp"),
@@ -588,6 +616,7 @@ const you = new Human("You", new Screen($("youWell")), {
 let running = false;
 let paused = false;
 let last = 0;
+let matchMs = 0;
 
 function start() {
   const seed = Math.floor(Math.random() * 1e9);
@@ -600,7 +629,11 @@ function start() {
     bump(player.els.score, 0);
     bump(player.els.lines, 0);
     player.els.pieces.textContent = 0;
+    player.els.time.textContent = "0:00";
   }
+  matchMs = 0;
+  $("clock").textContent = "0:00";
+  $("clock").parentElement.classList.remove("is-stopped");
   setTag(jev.els.status, "thinking…", "is-thinking");
   setTag(you.els.status, "playing", "is-live");
   $("start").textContent = "Restart";
@@ -617,11 +650,14 @@ function checkFinale() {
   const drew = jev.score === you.score;
   const won = you.score > jev.score;
   $("finaleTitle").textContent = drew ? "A dead heat!" : won ? "You win! 🎉" : "Jev wins 🤖";
-  $("finaleLine").textContent = drew
-    ? `${you.score} points each, from exactly the same pieces.`
-    : `${won ? "You" : "Jev"} finished ${gap} points ahead. ` +
-      `Jev: ${jev.score} points from ${jev.placed} pieces. ` +
-      `You: ${you.score} from ${you.placed}.`;
+  $("clock").parentElement.classList.add("is-stopped");
+  $("finaleLine").textContent =
+    (drew
+      ? `${you.score} points each, from exactly the same pieces. `
+      : `${won ? "You" : "Jev"} finished ${gap} points ahead. `) +
+    `Jev: ${jev.score} points from ${jev.placed} pieces in ${clock(jev.ms)}. ` +
+    `You: ${you.score} from ${you.placed} in ${clock(you.ms)}. ` +
+    `The match ran ${clock(matchMs)}.`;
   $("finale").hidden = false;
   if (won || drew) celebrate(3, "You");
 }
@@ -635,16 +671,25 @@ function leadLine() {
 }
 
 let leadTimer = 0;
+let clockTimer = 0;
 
 function frame(now) {
   requestAnimationFrame(frame); // scheduled first, so one bad frame cannot stop the clock
   const dt = Math.min(64, now - last || 16);
   last = now;
   if (running && !paused) {
+    matchMs += dt;
     jev.tick(dt);
     you.tick(dt);
     jev.els.pieces.textContent = jev.placed;
     you.els.pieces.textContent = you.placed;
+    clockTimer += dt;
+    if (clockTimer > 200) {
+      clockTimer = 0;
+      $("clock").textContent = clock(matchMs);
+      jev.els.time.textContent = clock(jev.ms);
+      you.els.time.textContent = clock(you.ms);
+    }
     leadTimer += dt;
     if (leadTimer > 900) {
       leadTimer = 0;

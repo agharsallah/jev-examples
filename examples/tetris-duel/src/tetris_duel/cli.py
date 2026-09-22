@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import random
 import threading
 import webbrowser
 from typing import Annotated
@@ -10,8 +9,7 @@ from typing import Annotated
 import typer
 
 from . import render
-from .board import PIECES, empty_grid
-from .duel import GameOver, as_payload, next_well, play_piece
+from .duel import self_play
 from .engine import EngineError
 from .pilot import BY_KEY, DEFAULT, DIFFICULTIES
 
@@ -21,20 +19,9 @@ app = typer.Typer(
     help="A self-playing well with Jev at the controls, and one next to it for you.",
 )
 
-LINE_SCORES = {0: 0, 1: 100, 2: 300, 3: 500, 4: 800}
-
-
 def _fail(message: str) -> None:
     render.console.print(f"[bold red]The match stopped.[/bold red]\n{message}")
     raise typer.Exit(code=1)
-
-
-def _bag(rng: random.Random):
-    """The standard seven-bag: every piece once, then shuffle again."""
-    while True:
-        pieces = list(PIECES)
-        rng.shuffle(pieces)
-        yield from pieces
 
 
 @app.command()
@@ -48,46 +35,70 @@ def watch(
     if difficulty not in BY_KEY:
         _fail(f"No such difficulty: {difficulty}. Pick one of: {', '.join(BY_KEY)}.")
 
-    rng = random.Random(seed)
-    upcoming = _bag(rng)
-    rows = list(empty_grid())
-    score = lines = 0
     render.banner()
-
-    piece = next(upcoming)
-    for count in range(1, pieces + 1):
-        following = next(upcoming)
-        try:
-            decision, menu, level = play_piece(
-                rows, piece, following, rows_cleared=lines, level_key=difficulty, model=model
+    tally = None
+    try:
+        for rows, payload, tally in self_play(difficulty, seed=seed, pieces=pieces, model=model):
+            render.console.clear()
+            render.banner()
+            render.console.print(
+                render.well(
+                    rows[-16:],
+                    title=f"[bold]{tally.score}[/bold] points · {tally.lines} rows · "
+                    f"piece {tally.pieces}/{pieces} · {render.clock(tally.seconds)}",
+                    subtitle=f"{BY_KEY[difficulty].label} · next: {payload['piece']}",
+                )
             )
-        except GameOver:
-            render.console.print("\n[bold red]Topped out.[/bold red] The well is full.")
-            break
-        except EngineError as error:
-            _fail(str(error))
+            render.console.print(render.reading(payload))
+    except EngineError as error:
+        _fail(str(error))
 
-        payload = as_payload(decision, menu, level)
-        rows, cleared = next_well(rows, payload["cells"])
-        lines += cleared
-        score += LINE_SCORES[cleared] * (lines // 10 + 1)
-
-        render.console.clear()
-        render.banner()
-        render.console.print(
-            render.well(
-                rows[-16:],
-                title=f"[bold]{score}[/bold] points · {lines} rows · piece {count}/{pieces}",
-                subtitle=f"{level.label} · next: {following}",
-            )
-        )
-        render.console.print(render.reading(payload))
-        piece = following
-
+    if tally is None:
+        render.console.print("\n[bold red]Topped out[/bold red] before anything landed.")
+        return
+    if tally.topped_out:
+        render.console.print("\n[bold red]Topped out.[/bold red] The well is full.")
     render.console.print(
-        f"\n[bold magenta]{score}[/bold magenta] points from [bold]{lines}[/bold] rows. "
+        f"\n[bold magenta]{tally.score}[/bold magenta] points from [bold]{tally.lines}[/bold] rows "
+        f"in [bold]{render.clock(tally.seconds)}[/bold] of play. "
         f"[dim]Play it yourself with `duel serve`.[/dim]\n"
     )
+
+
+@app.command()
+def bench(
+    difficulty: Annotated[list[str] | None, typer.Option("--difficulty", "-d", help="Repeatable; defaults to all of them.")] = None,
+    pieces: Annotated[int, typer.Option("--pieces", "-n", help="Pieces per match.")] = 40,
+    games: Annotated[int, typer.Option("--games", "-g", help="Matches per difficulty.")] = 1,
+    seed: Annotated[int, typer.Option("--seed", help="First seed; each match takes the next one.")] = 1,
+    model: Annotated[str | None, typer.Option("--model", "-m", help="Model to play, e.g. jev-1.13.0.")] = None,
+) -> None:
+    """Play the same pieces at every difficulty and print what each one scored.
+
+    One request per piece, so `-n 40 -g 1` over four difficulties is 160 calls.
+    Every difficulty gets the same seeds, so the only thing that differs between
+    two rows of the table is what Jev was told and what the house rules did.
+    """
+    keys = difficulty or list(BY_KEY)
+    for key in keys:
+        if key not in BY_KEY:
+            _fail(f"No such difficulty: {key}. Pick from: {', '.join(BY_KEY)}.")
+
+    render.banner()
+    results = []
+    for key in keys:
+        for game in range(games):
+            tally = None
+            with render.console.status(f"[magenta]{BY_KEY[key].label}[/magenta] match {game + 1}…"):
+                try:
+                    for move in self_play(key, seed=seed + game, pieces=pieces, model=model):
+                        tally = move[2]
+                except EngineError as error:
+                    _fail(str(error))
+            if tally is not None:
+                results.append(tally)
+                render.console.print(render.scoreline(BY_KEY[key].label, tally, pieces))
+    render.console.print(render.bench_table(results, BY_KEY, pieces, games))
 
 
 @app.command()
@@ -116,9 +127,11 @@ def levels() -> None:
     for level in DIFFICULTIES:
         render.console.print(f"[bold magenta]{level.label}[/bold magenta] [dim]({level.key})[/dim]")
         render.console.print(f"  {level.blurb}")
+        rules = "on" if level.house_rules else "off"
+        guard = " + slot guard" if level.well_guard else ""
         render.console.print(
-            f"  [dim]jev sees: {level.detail} · house rules: "
-            f"{'on' if level.house_rules else 'off'} · gravity: {level.gravity_ms}ms[/dim]\n"
+            f"  [dim]jev sees: {level.detail} · house rules: {rules}{guard} · "
+            f"gravity: {level.gravity_ms}ms[/dim]\n"
         )
 
 

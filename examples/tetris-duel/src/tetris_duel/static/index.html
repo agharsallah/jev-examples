@@ -29,6 +29,7 @@
         <button class="level" data-level="chill" role="radio" aria-checked="false">Chill</button>
         <button class="level is-on" data-level="steady" role="radio" aria-checked="true">Steady</button>
         <button class="level" data-level="ruthless" role="radio" aria-checked="false">Ruthless</button>
+        <button class="level" data-level="grandmaster" role="radio" aria-checked="false">Grandmaster</button>
       </div>
       <button class="start" id="start">Start the match</button>
     </div>
@@ -51,6 +52,7 @@
         <div class="stat big"><span class="num" id="jevScore">0</span><span class="cap">points</span></div>
         <div class="stat"><span class="num" id="jevLines">0</span><span class="cap">rows</span></div>
         <div class="stat"><span class="num" id="jevPieces">0</span><span class="cap">pieces</span></div>
+        <div class="stat"><span class="num" id="jevTime">0:00</span><span class="cap">time</span></div>
         <div class="next"><span class="cap">next</span><div class="mini" id="jevNext"></div></div>
       </div>
     </section>
@@ -58,6 +60,7 @@
     <!-- ----------------------------------------------------- the middle -->
     <section class="middle">
       <div class="versus" id="versus">VS</div>
+      <div class="clock"><span class="num" id="clock">0:00</span><span class="cap">played</span></div>
       <div class="lead" id="lead">tap start</div>
       <div class="keys">
         <p class="cap">your keys</p>
@@ -91,6 +94,7 @@
         <div class="stat big"><span class="num" id="youScore">0</span><span class="cap">points</span></div>
         <div class="stat"><span class="num" id="youLines">0</span><span class="cap">rows</span></div>
         <div class="stat"><span class="num" id="youPieces">0</span><span class="cap">pieces</span></div>
+        <div class="stat"><span class="num" id="youTime">0:00</span><span class="cap">time</span></div>
         <div class="next"><span class="cap">next</span><div class="mini" id="youNext"></div></div>
       </div>
     </section>
@@ -124,9 +128,10 @@
           <div class="meter-head"><span>clear rows now</span><span id="clearValue">—</span></div>
           <div class="track"><div class="fill clear" id="clearFill"></div></div>
         </div>
-        <div class="meter">
-          <div class="meter-head"><span>holding a well open</span><span id="wellValue">—</span></div>
-          <div class="track"><div class="fill hold" id="wellFill"></div></div>
+        <div class="meter" id="slotMeter" hidden>
+          <div class="meter-head"><span id="slotLabel">keep the slot open</span><span id="slotValue">—</span></div>
+          <div class="track"><div class="fill hold" id="slotFill"></div></div>
+          <p class="meter-note" id="slotNote"></p>
         </div>
         <div class="meter">
           <div class="meter-head"><span>confidence in the pick</span><span id="confValue">—</span></div>
@@ -144,12 +149,16 @@
       <a href="https://docs.typesafe.ai/models">Jev</a>: a
       <a href="https://docs.typesafe.ai/primitives/choice">Choice</a> over every legal landing,
       a <a href="https://docs.typesafe.ai/primitives/score">Score</a> for how much trouble the well
-      is in, and two <a href="https://docs.typesafe.ai/primitives/noul">Nouls</a> about what to do
-      about it — all answered against one reading of the board.
+      is in, a <a href="https://docs.typesafe.ai/primitives/noul">Noul</a> on whether to clear rows
+      now — and, on Grandmaster, one more asking whether a named column is worth keeping empty for
+      a four-row clear. All of it answered against one reading of the board.
       The answer is a rotation and a column, which the piece then plays out: it turns, walks
       across, and either falls or — when Jev's confidence clears the bar in
-      <code>pilot.py</code> — gets hard-dropped. Difficulty changes how much of each landing
-      Jev is shown, and whether the house rules may re-rank its answer. Both wells get the same pieces and the same
+      <code>pilot.py</code> — gets hard-dropped. Everything Jev is told is worked out in code
+      and handed over in words, because Jev reads language far better than it reads
+      arithmetic. Difficulty is how much of that it gets: where the piece lands, then the
+      well it leaves, then how it sits on the ground, then what the next piece could do
+      afterwards. Both wells get the same pieces and the same
       gravity; points come from cleared rows only.
     </p>
   </footer>

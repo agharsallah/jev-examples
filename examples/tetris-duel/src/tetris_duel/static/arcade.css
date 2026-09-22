@@ -251,6 +251,14 @@ a { color: var(--jev); text-underline-offset: 3px; }
   transform: rotate(-5deg);
 }
 
+.clock {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+.clock .num { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.clock.is-stopped .num { color: var(--ink-soft); }
+
 .lead {
   text-align: center;
   font-size: 0.92rem;
