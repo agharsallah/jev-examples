@@ -73,7 +73,7 @@ DIFFICULTIES: tuple[Difficulty, ...] = (
 )
 
 BY_KEY = {level.key: level for level in DIFFICULTIES}
-DEFAULT = "steady"
+DEFAULT = "grandmaster"
 
 
 def difficulty(key: str | None) -> Difficulty:

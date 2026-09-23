@@ -14,7 +14,7 @@ const CLEAR_NAMES = ["", "single", "double", "triple", "TETRIS!"];
 let SHAPES = {};
 let ROTATIONS = {};
 let LEVELS = [];
-let level = "steady";
+let level = "grandmaster";
 
 /* ------------------------------------------------------------ geometry */
 
@@ -175,7 +175,7 @@ class Player {
   }
 
   get gravity() {
-    const base = (LEVELS.find((l) => l.key === level) || { gravity_ms: 560 }).gravity_ms;
+    const base = (LEVELS.find((l) => l.key === level) || { gravity_ms: 280 }).gravity_ms;
     return Math.max(90, Math.round(base * Math.pow(0.86, this.level - 1)));
   }
 
@@ -763,7 +763,7 @@ $("again").addEventListener("click", start);
   SHAPES = data.pieces;
   LEVELS = data.levels;
   for (const key of KEYS) ROTATIONS[key] = orientations(SHAPES[key]);
-  $("blurb").textContent = (LEVELS.find((l) => l.key === level) || LEVELS[1]).blurb;
+  $("blurb").textContent = (LEVELS.find((l) => l.key === level) || LEVELS[LEVELS.length - 1]).blurb;
   jev.screen.paint(jev.grid);
   you.screen.paint(you.grid);
   requestAnimationFrame(frame);

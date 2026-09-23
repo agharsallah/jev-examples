@@ -61,6 +61,29 @@ directory or any parent, so the same file works whether you run from the root or
 `examples/tetris-duel/`; an exported `TYPESAFE_API_KEY` still wins over it. The key never
 leaves the server: the browser posts a well and gets a move back.
 
+## Hosting it on Vercel
+
+The arcade is a plain FastAPI app, and `app.py` at the root of this example is the
+entrypoint Vercel looks for. No `vercel.json` is needed:
+
+```bash
+cd examples/tetris-duel
+vercel                                   # first run links a project; set the root to this folder
+vercel env add TYPESAFE_API_KEY          # production, preview, or both
+vercel --prod
+```
+
+Or import the repo in the Vercel dashboard and set **Root Directory** to
+`examples/tetris-duel`. Vercel installs the dependencies from `pyproject.toml` and serves
+the whole app, `/static` included, from one function.
+
+The key stays server-side, the same as locally. But a public URL means anyone who finds it
+is spending your quota a piece at a time, so use a key you can revoke, or put the deployment
+behind [Vercel's deployment protection](https://vercel.com/docs/deployment-protection).
+
+Netlify is not an option without a rewrite: its functions run JavaScript, TypeScript and
+Go, and the game logic here is Python.
+
 ## Commands
 
 | Command | What it does |
@@ -265,6 +288,7 @@ src/tetris_duel/
   pilot.py       difficulty, and the house rules over Jev's answers
   duel.py        one piece, start to finish, plus self-play for the terminal and the bench
   web.py         FastAPI: POST a well, get a move
+app.py           Vercel entrypoint, re-exports web.app
   render.py      terminal theatre, via rich
   cli.py         typer commands
   static/        the arcade
