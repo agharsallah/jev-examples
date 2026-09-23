@@ -1,0 +1,35 @@
+/* The wait between filing and ruling, and the red notice when a hearing fails. */
+
+.deliberating { padding: .5rem 0 0; }
+
+.ticker {
+  margin: 0 0 .6rem;
+  color: var(--form-2);
+  font-style: italic;
+}
+
+.ticker::after {
+  content: "";
+  display: inline-block;
+  width: .55em;
+  height: 1.05em;
+  margin-left: .15em;
+  vertical-align: -.2em;
+  background: var(--form-2);
+  animation: blink 1s steps(1) infinite;
+}
+
+.docket-lights { display: flex; gap: .35rem; list-style: none; padding: 0; margin: 0; }
+.docket-lights li { width: 1.6rem; height: .45rem; background: rgba(234, 217, 180, .16); }
+.docket-lights li.lit { background: var(--form-2); }
+
+@keyframes blink { 50% { opacity: 0; } }
+
+.collapse {
+  background: var(--stamp);
+  color: var(--form);
+  padding: .9rem 1.2rem;
+  margin: 0;
+  box-shadow: var(--hard-shadow);
+  white-space: pre-line;
+}

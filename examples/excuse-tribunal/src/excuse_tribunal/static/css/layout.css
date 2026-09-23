@@ -1,0 +1,59 @@
+/* The page grid, and the chrome around the paperwork: masthead and footer. */
+
+main { display: grid; gap: 1.75rem; align-content: start; }
+
+.wall {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 3.5rem) 1rem 3rem;
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 62rem) {
+  .wall { grid-template-columns: minmax(0, 41rem) minmax(0, 1fr); align-items: start; }
+  .masthead, footer { grid-column: 1 / -1; }
+  .record { position: sticky; top: 2rem; }
+}
+
+/* ---- masthead ---- */
+
+.masthead { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+
+.seal {
+  flex: none;
+  width: 8.5rem;
+  height: 8.5rem;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  border: 3px double var(--form-2);
+  border-radius: 50%;
+  color: var(--form-2);
+  transform: rotate(-6deg);
+  opacity: .85;
+}
+
+.seal-word { font-family: Anton, Impact, sans-serif; font-size: 1.55rem; letter-spacing: .06em; line-height: 1; }
+.seal-top, .seal-bot { font-size: .62rem; letter-spacing: .22em; opacity: .8; }
+.seal-top { margin-bottom: .35rem; }
+.seal-bot { margin-top: .35rem; }
+
+.masthead-text { flex: 1 1 22rem; }
+
+h1 {
+  font-size: clamp(1.35rem, 3.4vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 .5rem;
+  max-width: 24ch;
+}
+
+.masthead-text p { margin: 0; max-width: 56ch; color: var(--form-2); font-size: .92rem; }
+
+/* ---- footer ---- */
+
+footer { color: var(--form-2); font-size: .78rem; opacity: .75; max-width: 60ch; }
+footer p { margin: 0; }

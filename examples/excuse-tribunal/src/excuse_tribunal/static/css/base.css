@@ -1,0 +1,27 @@
+/* Element defaults: the page font, the painted wall, links, focus, buttons. */
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font: 400 16px/1.6 "Courier Prime", ui-monospace, "Courier New", monospace;
+  color: var(--form);
+  background: var(--wall);
+  background-image:
+    linear-gradient(180deg, rgba(0, 0, 0, .34), transparent 22rem),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .08) 0 2px, transparent 2px 9px);
+}
+
+a { color: inherit; text-underline-offset: .2em; text-decoration-thickness: 1px; }
+
+:focus-visible { outline: 2px solid var(--stamp); outline-offset: 3px; }
+
+button { font: inherit; cursor: pointer; }
+
+/* Animations are theatre, never information, so they can all go. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::after { animation: none !important; transition: none !important; }
+  .ticker::after { opacity: 1; }
+}

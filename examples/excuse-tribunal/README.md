@@ -62,6 +62,7 @@ pass `--model`.
 | --- | --- |
 | `tribunal judge "<excuse>"` | Tries an excuse. Accepts stdin too: `echo "..." \| tribunal judge` |
 | `tribunal commit [--rev HEAD]` | Tries a git commit message against the files it actually touched |
+| `tribunal serve [--port 8000]` | Holds court in the browser: same hearing, same verdict logic |
 | `tribunal rap-sheet` | Your priors: every hearing, your average believability, your signature move |
 | `tribunal expunge` | Deletes the record (`~/.excuse-tribunal/rap-sheet.jsonl`) |
 
@@ -102,4 +103,27 @@ src/excuse_tribunal/
   render.py      courtroom theatre, via rich
   rap_sheet.py   your permanent record, as JSON lines
   cli.py         typer commands
+  web.py         FastAPI routes for `tribunal serve`
+  payload.py     the JSON shapes the browser draws from
+  static/
+    index.html   the courtroom page
+    css/         tokens, base, layout, sheet, deliberation, verdict, record
+    js/          compiled from web/src -- committed, so serving needs no Node
+web/src/         the browser UI, in TypeScript
+  main.ts          wiring only: finds the controls, attaches the handlers
+  api.ts           typed fetch calls; types mirror payload.py
+  hearing.ts       one hearing: read the form, wait, show the outcome
+  deliberation.ts  the docket lights and the muttering ticker
+  verdict.ts       puts the ruling down: thud, shake, bars filling
+  verdict-view.ts  the ruling sheet as pure markup
+  record.ts        the prior-offences panel
+  pleas.ts         "Deal me a plea", typed out
+  audio.ts         oscillator sound effects
+  format.ts        pure number and text formatting
+  dom.ts           element lookup and HTML escaping
 ```
+
+The web UI is TypeScript in `web/src`, compiled to plain ES modules in
+`static/js/` (no bundler). After changing it, rebuild from the repo root with
+`pnpm build` (or `pnpm exec tsc -b examples/excuse-tribunal/web` for just this
+example).

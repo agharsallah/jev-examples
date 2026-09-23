@@ -1,7 +1,10 @@
 """The courtroom, served over HTTP.
 
 The browser gets the theatre; this module does exactly what the CLI does --
-one request to Jev, then `deliberate` -- and hands the result over as JSON.
+one request to Jev, then `deliberate` -- and hands the result over as JSON,
+in the shapes `payload.py` defines. The page itself is static: HTML, CSS split
+by concern under `static/css/`, and ES modules compiled from `web/src` into
+`static/js/`.
 """
 
 from __future__ import annotations
@@ -14,9 +17,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import rap_sheet
+from .payload import as_payload, record_payload
 from .questions import excuse_docket
 from .tribunal import TribunalError, hear_case
-from .verdict import Verdict, deliberate
+from .verdict import deliberate
 
 STATIC = Path(__file__).parent / "static"
 
@@ -27,62 +31,6 @@ class Plea(BaseModel):
     audience: str | None = Field(default=None, max_length=200)
     model: str | None = None
     keep: bool = True
-
-
-def _level(score: float, legend: dict[int, str]) -> str:
-    return legend.get(int(round(score)), "—")
-
-
-def _measure(label: str, value: float, detail: str) -> dict:
-    return {"label": label, "value": value, "detail": detail}
-
-
-def _charge(charge, against: bool) -> dict:
-    return {"label": charge.label, "probability": charge.probability, "against": against}
-
-
-def as_payload(excuse: str, verdict: Verdict) -> dict:
-    """Everything the front end needs, in the shape it draws."""
-    ranked = sorted(
-        verdict.archetype_probabilities.items(), key=lambda kv: kv[1], reverse=True
-    )
-    shown = [pair for pair in ranked[:5] if pair[1] >= 0.01] or ranked[:2]
-
-    return {
-        "excuse": excuse,
-        "ruling": verdict.ruling,
-        "headline": verdict.headline,
-        "sentence": verdict.sentence,
-        "mistrial": verdict.is_mistrial,
-        "remarks": verdict.remarks,
-        "confidence": verdict.believability_confidence,
-        "measures": [
-            _measure("believability", verdict.believability, f"{verdict.believability:.2f} / 4"),
-            _measure("effort", verdict.effort, f"{verdict.effort:.2f} / 4"),
-            _measure("drama", verdict.drama, f"{verdict.drama:.2f} / 4"),
-            _measure(
-                "survives up to",
-                verdict.survives_up_to,
-                _level(verdict.survives_up_to, verdict.survival_legend),
-            ),
-        ],
-        "charges": (
-            [_charge(c, True) for c in verdict.aggravating]
-            + [_charge(c, False) for c in verdict.mitigating]
-        ),
-        "archetype": {
-            "name": verdict.archetype.replace("_", " "),
-            "confidence": verdict.archetype_confidence,
-            "ranked": [
-                {
-                    "name": name.replace("_", " "),
-                    "probability": probability,
-                    "chosen": name == verdict.archetype,
-                }
-                for name, probability in shown
-            ],
-        },
-    }
 
 
 def create_app() -> FastAPI:
@@ -111,24 +59,7 @@ def create_app() -> FastAPI:
     @app.get("/api/record")
     def record() -> dict:
         records = rap_sheet.history()
-        stats = rap_sheet.summary(records)
-        return {
-            "hearings": [
-                {
-                    "when": r.when,
-                    "excuse": r.excuse,
-                    "ruling": r.ruling,
-                    "archetype": r.archetype.replace("_", " "),
-                    "believability": r.believability,
-                }
-                for r in records[-20:]
-            ][::-1],
-            "summary": {
-                "hearings": stats.get("hearings", 0),
-                "average_believability": stats.get("average_believability", 0.0),
-                "signature_move": stats["signature_move"][0].replace("_", " ") if stats else None,
-            },
-        }
+        return record_payload(records, rap_sheet.summary(records))
 
     @app.delete("/api/record")
     def expunge() -> dict:

@@ -1,0 +1,93 @@
+/* The paper every form is printed on, and the plea form filled in on it. */
+
+.sheet {
+  position: relative;
+  color: var(--ink);
+  background: var(--form);
+  background-image:
+    radial-gradient(circle at .9rem 1.1rem, var(--wall) 0 .28rem, transparent .29rem),
+    radial-gradient(circle at .9rem 4.3rem, var(--wall) 0 .28rem, transparent .29rem),
+    repeating-linear-gradient(0deg, rgba(34, 30, 25, .04) 0 1px, transparent 1px 5px);
+  border: 1px solid rgba(34, 30, 25, .35);
+  box-shadow: var(--hard-shadow);
+  padding: 1.6rem 1.6rem 1.4rem 2.6rem;
+}
+
+.sheet-head {
+  display: flex;
+  gap: .75rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  padding-bottom: .6rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.form-no {
+  border: 1px solid var(--ink);
+  padding: 0 .4em;
+  font-size: .72rem;
+  letter-spacing: .12em;
+}
+
+.sheet-title { font-weight: 700; font-size: 1.02rem; letter-spacing: .02em; }
+.copy-mark { margin-left: auto; font-size: .7rem; color: var(--ink-soft); font-style: italic; }
+
+.field-name {
+  display: block;
+  font-size: .74rem;
+  letter-spacing: .12em;
+  color: var(--ink-soft);
+  margin-bottom: .2rem;
+}
+
+textarea, input[type="text"], input:not([type]) {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed rgba(34, 30, 25, .45);
+  padding: .3rem 0;
+  resize: vertical;
+}
+
+textarea { line-height: 1.75; border-bottom-width: 2px; }
+textarea::placeholder, input::placeholder { color: rgba(34, 30, 25, .35); font-style: italic; }
+
+.ruled { display: grid; gap: 1rem; margin-top: 1.15rem; }
+@media (min-width: 34rem) { .ruled { grid-template-columns: 1fr 1fr; } }
+
+.actions { display: flex; gap: .85rem; align-items: center; flex-wrap: wrap; margin-top: 1.5rem; }
+
+
+.gavel {
+  font-family: Anton, Impact, sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: .05em;
+  color: var(--form);
+  background: var(--stamp);
+  border: 1px solid var(--ink);
+  padding: .5rem 1.4rem;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s;
+}
+
+.gavel:hover { transform: translate(1px, 1px); box-shadow: 3px 3px 0 var(--ink); }
+.gavel:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+.gavel[disabled] { background: var(--ink-soft); cursor: wait; }
+
+.plain {
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid rgba(34, 30, 25, .5);
+  padding: .45rem .9rem;
+}
+
+.plain:hover { background: var(--form-2); }
+.plain.small { font-size: .78rem; padding: .25rem .6rem; }
+
+.sound { font-size: .78rem; color: var(--ink-soft); display: flex; gap: .35rem; align-items: center; }
+.sound input { accent-color: var(--stamp); }
+
+.hint { font-size: .74rem; color: var(--ink-soft); margin: .9rem 0 0; }

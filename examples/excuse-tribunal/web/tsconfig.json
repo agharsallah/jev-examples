@@ -1,0 +1,5 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "../src/excuse_tribunal/static/js", "tsBuildInfoFile": ".tsbuildinfo" },
+  "include": ["src"]
+}

@@ -1,0 +1,17 @@
+/* The prior-offences panel, painted straight onto the wall. */
+
+.record { color: var(--form-2); font-size: .85rem; }
+.record-head { display: flex; align-items: center; gap: .75rem; justify-content: space-between; }
+.record h2 { font-size: .8rem; letter-spacing: .16em; margin: 0; font-weight: 400; color: var(--form-2); }
+.record .plain { color: var(--form-2); border-color: rgba(234, 217, 180, .35); }
+.record .plain:hover { background: rgba(234, 217, 180, .12); }
+.record-stats { margin: .8rem 0; padding-bottom: .8rem; border-bottom: 1px solid rgba(234, 217, 180, .2); }
+
+.priors { list-style: none; padding: 0; margin: 0; display: grid; gap: .7rem; }
+.priors li { display: grid; gap: .1rem; }
+.priors .when { font-size: .72rem; opacity: .6; }
+.priors .said { color: var(--form); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.priors .outcome { font-size: .72rem; letter-spacing: .06em; }
+.priors .outcome[data-ruling="GUILTY OF FABRICATION"] { color: #e08c84; }
+.priors .outcome[data-ruling="ACQUITTED"] { color: #96c9a6; }
+.priors .outcome[data-ruling="MISTRIAL"] { color: #9fb6da; }

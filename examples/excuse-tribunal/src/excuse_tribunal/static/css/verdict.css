@@ -1,0 +1,117 @@
+/* The ruling sheet: stamp, measurements, charges, sentence, and the slam. */
+
+/* The ruling arrives as a second sheet, put down slightly askew. */
+.verdict { transform: rotate(-.35deg); }
+.verdict .sheet-head { margin-bottom: 1.8rem; }
+
+.ruling {
+  display: inline-block;
+  font-family: Anton, Impact, sans-serif;
+  font-size: clamp(1.5rem, 5.5vw, 2.4rem);
+  line-height: 1;
+  letter-spacing: .04em;
+  color: var(--stamp);
+  border: .22rem double var(--stamp);
+  padding: .3em .55em;
+  transform: rotate(-6deg);
+  transform-origin: left center;
+  margin: .6rem 0 1.8rem .4rem;
+  mix-blend-mode: multiply;
+  opacity: .92;
+}
+
+.ruling[data-ruling="ACQUITTED"] { color: #26603a; border-color: #26603a; }
+.ruling[data-ruling="MISTRIAL"] { color: var(--blue); border-color: var(--blue); }
+
+.headline { font-size: 1.12rem; font-weight: 700; margin: 0 0 1.5rem; max-width: 46ch; }
+
+.quoted {
+  margin: 0 0 1.4rem;
+  padding-left: .9rem;
+  border-left: 3px solid rgba(34, 30, 25, .3);
+  font-style: italic;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+.block-name {
+  font-size: .74rem;
+  letter-spacing: .12em;
+  color: var(--ink-soft);
+  border-bottom: 1px solid rgba(34, 30, 25, .25);
+  padding-bottom: .25rem;
+  margin: 1.8rem 0 .8rem;
+}
+
+.meter { display: grid; grid-template-columns: 9.5rem 1fr; gap: .5rem 1rem; align-items: center; margin-bottom: .55rem; }
+.meter-name { font-size: .88rem; color: var(--ink-soft); }
+.meter-bar { display: grid; grid-template-columns: minmax(4rem, 1fr) auto; gap: .75rem; align-items: center; }
+
+.track {
+  position: relative;
+  flex: 1;
+  height: .8rem;
+  background: repeating-linear-gradient(90deg, rgba(34, 30, 25, .22) 0 1px, transparent 1px 7px);
+  border-bottom: 1px solid rgba(34, 30, 25, .45);
+}
+
+.fill { height: 100%; width: 0; background: var(--ink); transition: width 1s cubic-bezier(.2, .9, .25, 1); }
+.track.blue .fill { background: var(--blue); }
+.meter-detail { font-size: .8rem; min-width: 6rem; max-width: 17rem; line-height: 1.35; }
+@media (max-width: 34rem) {
+  .meter { grid-template-columns: 1fr; gap: .1rem; }
+  .meter-detail { min-width: 0; }
+  .sheet { padding: 1.2rem 1.1rem 1.2rem 2.2rem; }
+}
+
+.charges { list-style: none; padding: 0; margin: 0; }
+
+.charges li {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .12rem 0;
+  animation: read-out .45s both;
+}
+
+.mark { font-weight: 700; width: 1ch; }
+.charges li.against .mark { color: var(--stamp); }
+.charges li.for .mark { color: var(--blue); }
+.leader { flex: 1; border-bottom: 1px dotted rgba(34, 30, 25, .4); transform: translateY(-.25em); }
+.pct { font-size: .8rem; color: var(--ink-soft); }
+
+@keyframes read-out { from { opacity: 0; transform: translateX(-.4rem); } }
+
+.filed { font-size: .82rem; color: var(--ink-soft); margin: 0 0 .7rem; }
+.filed strong { color: var(--ink); font-size: .95rem; }
+
+.sentence {
+  margin: 2rem 0 0;
+  background: var(--ink);
+  color: var(--form);
+  padding: .9rem 1.2rem;
+  transform: rotate(-.5deg);
+  box-shadow: 5px 5px 0 rgba(34, 30, 25, .25);
+}
+
+.sentence span { display: block; font-size: .72rem; letter-spacing: .18em; opacity: .7; margin-bottom: .2rem; }
+.sentence p { margin: 0; font-weight: 700; }
+
+.remarks { margin: 0; padding: 0; list-style: none; font-style: italic; color: var(--ink-soft); font-size: .88rem; }
+.remarks li { margin-top: .35rem; max-width: 56ch; }
+
+.confidence { font-size: .76rem; color: var(--ink-soft); margin: 1rem 0 0; }
+
+.slam { animation: slam .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes slam {
+  0% { opacity: 0; transform: rotate(-22deg) scale(3); }
+  60% { opacity: .92; transform: rotate(-4deg) scale(.94); }
+  100% { opacity: .92; transform: rotate(-6deg) scale(1); }
+}
+
+.shaken { animation: shake .3s; }
+@keyframes shake {
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-2px, -1px); }
+}

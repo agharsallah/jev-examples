@@ -1,0 +1,16 @@
+/* A traffic-court aesthetic: institutional green paint, manila forms, carbon
+   ink, and one rubber stamp that does all the shouting.
+
+   Design tokens only; every other stylesheet reads from these. */
+
+:root {
+  --wall: #27342d;
+  --wall-deep: #1b2420;
+  --form: #ead9b4;
+  --form-2: #dcc79c;
+  --ink: #221e19;
+  --ink-soft: #6a6152;
+  --stamp: #a8281f;
+  --blue: #2f4c7e;
+  --hard-shadow: 10px 10px 0 rgba(0, 0, 0, .3);
+}
