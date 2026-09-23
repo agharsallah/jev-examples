@@ -1,0 +1,43 @@
+[project]
+name = "tetris-laya"
+version = "0.1.0"
+description = "The tetris duel, with a local Laya model at the controls instead of Jev."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "tetris-duel",
+    "laya>=0.3.7",
+    "typer>=0.15",
+    "rich>=13.9",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+]
+
+[project.scripts]
+laya-duel = "tetris_laya.cli:app"
+
+[project.entry-points."tetris_duel.players"]
+laya = "tetris_laya.player:player"
+
+[tool.uv.sources]
+tetris-duel = { workspace = true }
+
+[dependency-groups]
+dev = ["ruff>=0.8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tetris_laya"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/tetris_laya/cli/*.py" = ["E501"]
