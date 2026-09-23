@@ -1,0 +1,3459 @@
+{
+ "repo": {
+  "slug": "omnigent-ai/omnigent",
+  "description": "Omnigent is an open-source AI agent framework and meta-harness: orchestrate Claude Code, Codex, Cursor, Pi, and custom agents \u2014 swap harnesses without rewriting, enforce policies and sandboxing, and collaborate in real time from any device.",
+  "url": "https://github.com/omnigent-ai/omnigent"
+ },
+ "issue": {
+  "number": 8107,
+  "title": "[Bug] opencode-native permission/question prompt visible only in terminal, chat shows no approval card or notice (session looks stalled)",
+  "url": "https://github.com/omnigent-ai/omnigent/issues/8107",
+  "state": "OPEN",
+  "author": "bunzin",
+  "association": "NONE",
+  "created_at": "2026-09-23T07:13:21Z",
+  "labels": [
+   "Bug",
+   "P2-medium",
+   "triaged",
+   "comp:harness-t2",
+   "validated:likely_repro"
+  ],
+  "comments": 3
+ },
+ "body": "## Summary\n\nAn `opencode-native` session can block on a file-access / shell / question prompt that is visible **only in the Terminal view**. The Chat view shows no approval card and no notice \u2014 the session just looks stalled (pending tool, no explanation). The user only discovers the waiter by manually opening the Terminal view.\n\nAt minimum, a parked-but-invisible prompt should never hang silently: either surface a generic approve/deny card (or a read-only notice like #7213) or fail the turn loudly with the prompt kind, so the session doesn't sit indefinitely with nothing in chat.\n\n## Environment\n\n- omnigent 0.15.0 (built 2026-09-22T15:10:14Z, `omnigent --version`)\n- harness `opencode-native`, opencode serve 1.18.32\n- Linux WSL2 (6.18.33.2-microsoft-standard-WSL2 x86_64), 19Gi RAM\n- Session role: meta orchestrator itself (`opencode-native / opencode-go/muse-spark-1.3-contributor`, `executor.variant` pinned via local patch for #8091) \u2014 but the mechanism is harness-level, not role-specific\n- Policy path: default file & shell approval policies (prompt on `permission.v2.asked` / `question.asked`)\n\n## Observed behavior\n\n- opencode raises a permission/question prompt (file access, shell, or blocking `question` tool).\n- Terminal view: the native opencode prompt IS visible and waiting for a decision.\n- Chat view: NO approval card, NO notice, NO explanation of what is waiting. Turn shows a pending tool and then nothing.\n- The session sits until the human happens to check the Terminal view and answers there. From chat alone it is indistinguishable from a stalled/hung turn.\n\n## Repro steps (developer-replayable, no credentials needed for the code half)\n\nLive repro (needs an opencode-native session with approval policies on):\n\n1. Start a new `opencode-native` session (any role; meta itself reproduces it).\n2. Have it perform an action covered by an approval policy (e.g. `bash` run, file edit outside the auto-approved scope, or a blocking `question` tool call).\n3. When opencode emits the prompt, compare the two surfaces:\n   - Terminal view \u2192 native prompt visible, waiting.\n   - Chat view \u2192 no approval card / no notice; session appears stalled.\n4. Confirm the waiter only via Terminal; answering there unblocks the turn.\n\nCode-half repro (no inference, shows the silent-drop paths on installed 0.15.0):\n\n1. `parse_permission_request` (`harnesses/opencode_native/permissions.py:59`) returns `None` when no `id`/`requestID`/`request_id` key is present \u2014 `_on_permission_asked` (`forwarder.py:986`) then `return`s with no card, no log, no chat notice while opencode keeps waiting.\n2. `state.mark((\"perm\", request_id))` dedup miss \u2192 silent `return` (same function).\n3. `reply_permission` transport failure \u2192 `warning` log line only (`forwarder.py:1009`), nothing in chat.\n4. `question.asked` with a malformed entry (missing `question`/non-string prompt, missing/empty `options` label) \u2192 `_reject_question_quietly` (6 call sites, `forwarder.py:1088-1146`) rejects opencode-side with no chat signal.\n5. `permissions.py` header still says \"live-verified against 1.17.7, which emits v1 `permission.asked`\" \u2014 the installed serve here is 1.18.32. Any new 1.18.x permission/question shape with different keys falls into paths 1\u20134 above.\n\n## Expected\n\nPick at least the fail-loud half (mirrors the ask in #8101 for agy):\n\n1. An unrecognized / unforwardable `permission`/`question` event never hangs silently \u2014 either a generic approve/deny card with the raw summary, or a loud turn failure naming the event kind.\n2. (Full fix, same pattern as #7213 for claude-native) Mirror the visible terminal permission/question text into chat as a read-only notice \u2014 warning + all displayed choices, excluded from model context, never auto-answering. Answering stays via the approval card or terminal.\n3. (Diagnostics, same pattern as #8037/#8038) Correlate native blocker \u2192 approval publication/retry/verdict \u2192 chat receipt so a missing card is diagnosable after the fact instead of \"session just sat there\".\n\n## Code refs (v0.15.0 wheel, `opencode_native/`)\n\n- `forwarder.py:986-1012` `_on_permission_asked` \u2014 silent `None`/dedup returns; `decision_to_reply(\"ask\") \u2192 None \u2192 \"reject\"` fail-closed with the human card parked upstream-only inside the policy evaluator.\n- `permissions.py:59-99` `parse_permission_request` \u2014 accepts only `id`/`requestID`/`request_id` + `action`/`type`/`permission`; comment pins verification to opencode 1.17.7.\n- `forwarder.py:1042-1179` `_on_question_asked` / `_handle_question` \u2014 background-task park via `native-permission-request` hook; `None` verdict (TUI answered / timeout) rejects to unblock with no chat trace; malformed shape \u2192 `_reject_question_quietly`.\n- `forwarder.py:1300-1307` `_HANDLERS` \u2014 only `permission.asked`, `permission.v2.asked`, `question.asked/replied/rejected` route to the gate; anything else has no path to chat.\n- Contrast: claude-native got the read-only mirror (#7212/#7213) and a pane-mirror safety net proposal (#6111); opencode-native has neither.\n\n## Duplicate check (searched 2026-09-23 via API)\n\n- No open issue for **opencode-native** approval/permission invisible in chat. `search: opencode+approval` and `approval+card+terminal` return only other harnesses.\n- Same symptom class, other harnesses (not duplicates, cited as patterns):\n  - #7212 (closed) / #7213 \u2014 claude-native terminal confirmations missing from chat \u2192 read-only mirror fix. This issue is the opencode-native equivalent.\n  - #6111 (open) \u2014 claude-native `PermissionRequest` hook failure leaves terminal-only prompt for 2h47m \u2192 traceability + pane-mirror safety net. opencode-native has no equivalent safety net.\n  - #8101 (open) \u2014 antigravity drops 16/18 `requestedInteraction` kinds, hangs with no card \u2192 asks for generic-card-or-loud-failure. Same minimum ask as here.\n  - #8037 / #8038 (open) \u2014 correlated diagnostics for native dialogs/approval delivery (claude path). Same diagnosability gap.\n  - #7151, #6653, #5667 \u2014 cursor/agy dead-pane, full-prompt capture, durable approvals; adjacent, not this bug.\n- Related fixed-and-closed (proves the class is real, scope is harness-specific): #7212/#7213, #7405, #7213 follow-ups.\n\n## Workaround in use\n\nManually poll the Terminal view when a turn looks stalled; answer the native prompt there. Pre-approving known-safe scopes reduces frequency but does not fix the invisible-waiter class.\n\n## Suggested fix direction (maintainer's call)\n\n1. Fail-loud first: any `permission.*`/`question.*` event that cannot be parked as a card logs + posts a chat-visible marker (or fails the turn naming the kind) \u2014 never a silent return while opencode waits.\n2. Then the #7213-style read-only terminal-dialog mirror for opencode-native (pane capture already exists for other harnesses).\n3. Then the #6111-style safety net: if a native opencode prompt stays up N seconds with no card pending server-side, raise one via the generic `native-permission-request` hook.",
+ "units": [
+  {
+   "index": 0,
+   "text": "## Summary",
+   "start": 0,
+   "end": 10,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 1,
+   "text": "An `opencode-native` session can block on a file-access / shell / question prompt that is visible **only in the Terminal view**.",
+   "start": 12,
+   "end": 140,
+   "kind": "sentence",
+   "asked": true
+  },
+  {
+   "index": 2,
+   "text": "The Chat view shows no approval card and no notice \u2014 the session just looks stalled (pending tool, no explanation).",
+   "start": 141,
+   "end": 256,
+   "kind": "sentence",
+   "asked": true
+  },
+  {
+   "index": 3,
+   "text": "The user only discovers the waiter by manually opening the Terminal view.",
+   "start": 257,
+   "end": 330,
+   "kind": "sentence",
+   "asked": true
+  },
+  {
+   "index": 4,
+   "text": "At minimum, a parked-but-invisible prompt should never hang silently: either surface a generic approve/deny card (or a read-only notice like #7213) or fail the turn loudly with the prompt kind, so the session doesn't sit indefinitely with nothing in chat.",
+   "start": 332,
+   "end": 587,
+   "kind": "sentence",
+   "asked": true
+  },
+  {
+   "index": 5,
+   "text": "## Environment",
+   "start": 589,
+   "end": 603,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 6,
+   "text": "- omnigent 0.15.0 (built 2026-09-22T15:10:14Z, `omnigent --version`)",
+   "start": 605,
+   "end": 673,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 7,
+   "text": "- harness `opencode-native`, opencode serve 1.18.32",
+   "start": 674,
+   "end": 725,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 8,
+   "text": "- Linux WSL2 (6.18.33.2-microsoft-standard-WSL2 x86_64), 19Gi RAM",
+   "start": 726,
+   "end": 791,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 9,
+   "text": "- Session role: meta orchestrator itself (`opencode-native / opencode-go/muse-spark-1.3-contributor`, `executor.variant` pinned via local patch for #8091) \u2014 but the mechanism is harness-level, not role-specific",
+   "start": 792,
+   "end": 1002,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 10,
+   "text": "- Policy path: default file & shell approval policies (prompt on `permission.v2.asked` / `question.asked`)",
+   "start": 1003,
+   "end": 1109,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 11,
+   "text": "## Observed behavior",
+   "start": 1111,
+   "end": 1131,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 12,
+   "text": "- opencode raises a permission/question prompt (file access, shell, or blocking `question` tool).",
+   "start": 1133,
+   "end": 1230,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 13,
+   "text": "- Terminal view: the native opencode prompt IS visible and waiting for a decision.",
+   "start": 1231,
+   "end": 1313,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 14,
+   "text": "- Chat view: NO approval card, NO notice, NO explanation of what is waiting. Turn shows a pending tool and then nothing.",
+   "start": 1314,
+   "end": 1434,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 15,
+   "text": "- The session sits until the human happens to check the Terminal view and answers there. From chat alone it is indistinguishable from a stalled/hung turn.",
+   "start": 1435,
+   "end": 1589,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 16,
+   "text": "## Repro steps (developer-replayable, no credentials needed for the code half)",
+   "start": 1591,
+   "end": 1669,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 17,
+   "text": "Live repro (needs an opencode-native session with approval policies on):",
+   "start": 1671,
+   "end": 1743,
+   "kind": "sentence",
+   "asked": true
+  },
+  {
+   "index": 18,
+   "text": "1. Start a new `opencode-native` session (any role; meta itself reproduces it).",
+   "start": 1745,
+   "end": 1824,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 19,
+   "text": "2. Have it perform an action covered by an approval policy (e.g. `bash` run, file edit outside the auto-approved scope, or a blocking `question` tool call).",
+   "start": 1825,
+   "end": 1981,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 20,
+   "text": "3. When opencode emits the prompt, compare the two surfaces:",
+   "start": 1982,
+   "end": 2042,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 21,
+   "text": "- Terminal view \u2192 native prompt visible, waiting.",
+   "start": 2046,
+   "end": 2095,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 22,
+   "text": "- Chat view \u2192 no approval card / no notice; session appears stalled.",
+   "start": 2099,
+   "end": 2167,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 23,
+   "text": "4. Confirm the waiter only via Terminal; answering there unblocks the turn.",
+   "start": 2168,
+   "end": 2243,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 24,
+   "text": "Code-half repro (no inference, shows the silent-drop paths on installed 0.15.0):",
+   "start": 2245,
+   "end": 2325,
+   "kind": "sentence",
+   "asked": true
+  },
+  {
+   "index": 25,
+   "text": "1. `parse_permission_request` (`harnesses/opencode_native/permissions.py:59`) returns `None` when no `id`/`requestID`/`request_id` key is present \u2014 `_on_permission_asked` (`forwarder.py:986`) then `return`s with no card, no log, no chat notice while opencode keeps waiting.",
+   "start": 2327,
+   "end": 2600,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 26,
+   "text": "2. `state.mark((\"perm\", request_id))` dedup miss \u2192 silent `return` (same function).",
+   "start": 2601,
+   "end": 2684,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 27,
+   "text": "3. `reply_permission` transport failure \u2192 `warning` log line only (`forwarder.py:1009`), nothing in chat.",
+   "start": 2685,
+   "end": 2790,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 28,
+   "text": "4. `question.asked` with a malformed entry (missing `question`/non-string prompt, missing/empty `options` label) \u2192 `_reject_question_quietly` (6 call sites, `forwarder.py:1088-1146`) rejects opencode-side with no chat signal.",
+   "start": 2791,
+   "end": 3016,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 29,
+   "text": "5. `permissions.py` header still says \"live-verified against 1.17.7, which emits v1 `permission.asked`\" \u2014 the installed serve here is 1.18.32. Any new 1.18.x permission/question shape with different keys falls into paths 1\u20134 above.",
+   "start": 3017,
+   "end": 3248,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 30,
+   "text": "## Expected",
+   "start": 3250,
+   "end": 3261,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 31,
+   "text": "Pick at least the fail-loud half (mirrors the ask in #8101 for agy):",
+   "start": 3263,
+   "end": 3331,
+   "kind": "sentence",
+   "asked": true
+  },
+  {
+   "index": 32,
+   "text": "1. An unrecognized / unforwardable `permission`/`question` event never hangs silently \u2014 either a generic approve/deny card with the raw summary, or a loud turn failure naming the event kind.",
+   "start": 3333,
+   "end": 3523,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 33,
+   "text": "2. (Full fix, same pattern as #7213 for claude-native) Mirror the visible terminal permission/question text into chat as a read-only notice \u2014 warning + all displayed choices, excluded from model context, never auto-answering. Answering stays via the approval card or terminal.",
+   "start": 3524,
+   "end": 3800,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 34,
+   "text": "3. (Diagnostics, same pattern as #8037/#8038) Correlate native blocker \u2192 approval publication/retry/verdict \u2192 chat receipt so a missing card is diagnosable after the fact instead of \"session just sat there\".",
+   "start": 3801,
+   "end": 4008,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 35,
+   "text": "## Code refs (v0.15.0 wheel, `opencode_native/`)",
+   "start": 4010,
+   "end": 4058,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 36,
+   "text": "- `forwarder.py:986-1012` `_on_permission_asked` \u2014 silent `None`/dedup returns; `decision_to_reply(\"ask\") \u2192 None \u2192 \"reject\"` fail-closed with the human card parked upstream-only inside the policy evaluator.",
+   "start": 4060,
+   "end": 4266,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 37,
+   "text": "- `permissions.py:59-99` `parse_permission_request` \u2014 accepts only `id`/`requestID`/`request_id` + `action`/`type`/`permission`; comment pins verification to opencode 1.17.7.",
+   "start": 4267,
+   "end": 4441,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 38,
+   "text": "- `forwarder.py:1042-1179` `_on_question_asked` / `_handle_question` \u2014 background-task park via `native-permission-request` hook; `None` verdict (TUI answered / timeout) rejects to unblock with no chat trace; malformed shape \u2192 `_reject_question_quietly`.",
+   "start": 4442,
+   "end": 4696,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 39,
+   "text": "- `forwarder.py:1300-1307` `_HANDLERS` \u2014 only `permission.asked`, `permission.v2.asked`, `question.asked/replied/rejected` route to the gate; anything else has no path to chat.",
+   "start": 4697,
+   "end": 4873,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 40,
+   "text": "- Contrast: claude-native got the read-only mirror (#7212/#7213) and a pane-mirror safety net proposal (#6111); opencode-native has neither.",
+   "start": 4874,
+   "end": 5014,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 41,
+   "text": "## Duplicate check (searched 2026-09-23 via API)",
+   "start": 5016,
+   "end": 5064,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 42,
+   "text": "- No open issue for **opencode-native** approval/permission invisible in chat. `search: opencode+approval` and `approval+card+terminal` return only other harnesses.",
+   "start": 5066,
+   "end": 5230,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 43,
+   "text": "- Same symptom class, other harnesses (not duplicates, cited as patterns):",
+   "start": 5231,
+   "end": 5305,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 44,
+   "text": "- #7212 (closed) / #7213 \u2014 claude-native terminal confirmations missing from chat \u2192 read-only mirror fix. This issue is the opencode-native equivalent.",
+   "start": 5308,
+   "end": 5459,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 45,
+   "text": "- #6111 (open) \u2014 claude-native `PermissionRequest` hook failure leaves terminal-only prompt for 2h47m \u2192 traceability + pane-mirror safety net. opencode-native has no equivalent safety net.",
+   "start": 5462,
+   "end": 5650,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 46,
+   "text": "- #8101 (open) \u2014 antigravity drops 16/18 `requestedInteraction` kinds, hangs with no card \u2192 asks for generic-card-or-loud-failure. Same minimum ask as here.",
+   "start": 5653,
+   "end": 5809,
+   "kind": "item",
+   "asked": true
+  },
+  {
+   "index": 47,
+   "text": "- #8037 / #8038 (open) \u2014 correlated diagnostics for native dialogs/approval delivery (claude path). Same diagnosability gap.",
+   "start": 5812,
+   "end": 5936,
+   "kind": "item",
+   "asked": false
+  },
+  {
+   "index": 48,
+   "text": "- #7151, #6653, #5667 \u2014 cursor/agy dead-pane, full-prompt capture, durable approvals; adjacent, not this bug.",
+   "start": 5939,
+   "end": 6048,
+   "kind": "item",
+   "asked": false
+  },
+  {
+   "index": 49,
+   "text": "- Related fixed-and-closed (proves the class is real, scope is harness-specific): #7212/#7213, #7405, #7213 follow-ups.",
+   "start": 6049,
+   "end": 6168,
+   "kind": "item",
+   "asked": false
+  },
+  {
+   "index": 50,
+   "text": "## Workaround in use",
+   "start": 6170,
+   "end": 6190,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 51,
+   "text": "Manually poll the Terminal view when a turn looks stalled; answer the native prompt there.",
+   "start": 6192,
+   "end": 6282,
+   "kind": "sentence",
+   "asked": false
+  },
+  {
+   "index": 52,
+   "text": "Pre-approving known-safe scopes reduces frequency but does not fix the invisible-waiter class.",
+   "start": 6283,
+   "end": 6377,
+   "kind": "sentence",
+   "asked": false
+  },
+  {
+   "index": 53,
+   "text": "## Suggested fix direction (maintainer's call)",
+   "start": 6379,
+   "end": 6425,
+   "kind": "heading",
+   "asked": false
+  },
+  {
+   "index": 54,
+   "text": "1. Fail-loud first: any `permission.*`/`question.*` event that cannot be parked as a card logs + posts a chat-visible marker (or fails the turn naming the kind) \u2014 never a silent return while opencode waits.",
+   "start": 6427,
+   "end": 6633,
+   "kind": "item",
+   "asked": false
+  },
+  {
+   "index": 55,
+   "text": "2. Then the #7213-style read-only terminal-dialog mirror for opencode-native (pane capture already exists for other harnesses).",
+   "start": 6634,
+   "end": 6761,
+   "kind": "item",
+   "asked": false
+  },
+  {
+   "index": 56,
+   "text": "3. Then the #6111-style safety net: if a native opencode prompt stays up N seconds with no card pending server-side, raise one via the generic `native-permission-request` hook.",
+   "start": 6762,
+   "end": 6938,
+   "kind": "item",
+   "asked": false
+  }
+ ],
+ "candidates": [
+  {
+   "number": 8091,
+   "title": "[Bug] opencode-native silently drops `executor.variant`: no spec field, no payload key, `#suffix` leaks into modelID",
+   "state": "open",
+   "url": "https://github.com/omnigent-ai/omnigent/issues/8091"
+  },
+  {
+   "number": 8101,
+   "title": "antigravity: 16 of 18 agy requestedInteraction kinds are dropped, agy hangs with no approval card",
+   "state": "open",
+   "url": "https://github.com/omnigent-ai/omnigent/issues/8101"
+  },
+  {
+   "number": 7212,
+   "title": "[Bug] Claude-native terminal confirmations and notifications are missing from chat",
+   "state": "closed",
+   "url": "https://github.com/omnigent-ai/omnigent/issues/7212"
+  },
+  {
+   "number": 7386,
+   "title": "[Bug] antigravity-native: agy >= 1.2 requires a CSRF token on its local connect-RPC endpoint, so the reader never binds and permission prompts never reach the web UI",
+   "state": "closed",
+   "url": "https://github.com/omnigent-ai/omnigent/issues/7386"
+  },
+  {
+   "number": 7374,
+   "title": "[Feature] Let an acp: agent entry set permission_mode (auto-approve for agents already trusted in their own CLI)",
+   "state": "open",
+   "url": "https://github.com/omnigent-ai/omnigent/issues/7374"
+  },
+  {
+   "number": 7405,
+   "title": "[Bug] claude-native: approval card stays stuck after approving EnterWorktree in the terminal (transcript relocates; forwarder tails the vanished path)",
+   "state": "closed",
+   "url": "https://github.com/omnigent-ai/omnigent/issues/7405"
+  }
+ ],
+ "taxonomy": {
+  "repo": "omnigent-ai/omnigent",
+  "roles": {
+   "Bug": {
+    "role": "issue_type",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 1.0,
+     "component": 0.0,
+     "workflow_status": 0.0
+    },
+    "prefix": null,
+    "issues": 1159
+   },
+   "Docs": {
+    "role": "issue_type",
+    "confidence": 0.99,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.99,
+     "component": 0.01,
+     "other": 0.0
+    },
+    "prefix": null,
+    "issues": 14
+   },
+   "duplicate": {
+    "role": "maintainer_decision",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 1.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": null,
+    "issues": 20
+   },
+   "Feature": {
+    "role": "issue_type",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 1.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": null,
+    "issues": 536
+   },
+   "good first issue": {
+    "role": "attribute",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 1.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 0.0
+    },
+    "prefix": null,
+    "issues": 1
+   },
+   "help wanted": {
+    "role": "attribute",
+    "confidence": 0.8,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.82,
+     "priority": 0.0,
+     "workflow_status": 0.14,
+     "maintainer_decision": 0.02,
+     "severity": 0.0,
+     "issue_type": 0.01,
+     "component": 0.0,
+     "other": 0.01
+    },
+    "prefix": null,
+    "issues": 723
+   },
+   "wontfix": {
+    "role": "maintainer_decision",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 1.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": null,
+    "issues": 1
+   },
+   "needs-triage": {
+    "role": "workflow_status",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 1.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "release": 0.0
+    },
+    "prefix": null,
+    "issues": 8
+   },
+   "comp:server": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "release": 0.0
+    },
+    "prefix": "comp",
+    "issues": 567
+   },
+   "comp:repr": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "other": 0.0
+    },
+    "prefix": "comp",
+    "issues": 145
+   },
+   "comp:runner": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "other": 0.0
+    },
+    "prefix": "comp",
+    "issues": 390
+   },
+   "comp:policies": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "release": 0.0
+    },
+    "prefix": "comp",
+    "issues": 82
+   },
+   "comp:web-ui": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "workflow_status": 0.0
+    },
+    "prefix": "comp",
+    "issues": 576
+   },
+   "comp:harnesses": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "release": 0.0
+    },
+    "prefix": "comp",
+    "issues": 321
+   },
+   "comp:infra": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "workflow_status": 0.0
+    },
+    "prefix": "comp",
+    "issues": 121
+   },
+   "P0-critical": {
+    "role": "priority",
+    "confidence": 0.97,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 0.98,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.02,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": "p",
+    "issues": 23
+   },
+   "P1-high": {
+    "role": "priority",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 1.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": "p",
+    "issues": 404
+   },
+   "P2-medium": {
+    "role": "priority",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 1.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "release": 0.0
+    },
+    "prefix": "p",
+    "issues": 1158
+   },
+   "needs-info": {
+    "role": "attribute",
+    "confidence": 0.58,
+    "probabilities": {
+     "workflow_status": 0.37,
+     "attribute": 0.63,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": null,
+    "issues": 16
+   },
+   "P3-low": {
+    "role": "priority",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 1.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "release": 0.0
+    },
+    "prefix": "p",
+    "issues": 121
+   },
+   "triaged": {
+    "role": "workflow_status",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 1.0
+    },
+    "prefix": null,
+    "issues": 1689
+   },
+   "comp:tui": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "other": 0.0
+    },
+    "prefix": "comp",
+    "issues": 198
+   },
+   "0.3.0": {
+    "role": "release",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 1.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 0.0
+    },
+    "prefix": null,
+    "issues": 9
+   },
+   "needs-demo": {
+    "role": "workflow_status",
+    "confidence": 0.55,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.39,
+     "priority": 0.0,
+     "workflow_status": 0.61,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": null,
+    "issues": 1
+   },
+   "nightly-failure": {
+    "role": "workflow_status",
+    "confidence": 0.35,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.37,
+     "priority": 0.0,
+     "workflow_status": 0.42,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.2,
+     "component": 0.0,
+     "other": 0.01
+    },
+    "prefix": null,
+    "issues": 6
+   },
+   "0.5.0": {
+    "role": "release",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 1.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 0.0
+    },
+    "prefix": null,
+    "issues": 2
+   },
+   "review-sla-escalated": {
+    "role": "workflow_status",
+    "confidence": 0.99,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 1.0
+    },
+    "prefix": null,
+    "issues": 102
+   },
+   "waiting-on-author": {
+    "role": "workflow_status",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 1.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": null,
+    "issues": 1
+   },
+   "stale": {
+    "role": "workflow_status",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 1.0
+    },
+    "prefix": null,
+    "issues": 3
+   },
+   "validated:reproduced": {
+    "role": "workflow_status",
+    "confidence": 0.98,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.01,
+     "priority": 0.0,
+     "workflow_status": 0.99,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": "validated",
+    "issues": 629
+   },
+   "validated:not_reproduced": {
+    "role": "workflow_status",
+    "confidence": 0.97,
+    "probabilities": {
+     "workflow_status": 0.98,
+     "attribute": 0.01,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.01,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": "validated",
+    "issues": 15
+   },
+   "validated:already_fixed": {
+    "role": "workflow_status",
+    "confidence": 0.97,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.01,
+     "priority": 0.0,
+     "workflow_status": 0.97,
+     "maintainer_decision": 0.02,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": "validated",
+    "issues": 102
+   },
+   "validated:needs_more_info": {
+    "role": "workflow_status",
+    "confidence": 0.98,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.02,
+     "priority": 0.0,
+     "workflow_status": 0.98,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": "validated",
+    "issues": 3
+   },
+   "validated:needs_manual_review": {
+    "role": "workflow_status",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 1.0
+    },
+    "prefix": "validated",
+    "issues": 22
+   },
+   "validating": {
+    "role": "workflow_status",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 1.0
+    },
+    "prefix": null,
+    "issues": 7
+   },
+   "focus: oss": {
+    "role": "attribute",
+    "confidence": 0.7,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.72,
+     "priority": 0.0,
+     "other": 0.12,
+     "maintainer_decision": 0.02,
+     "severity": 0.0,
+     "issue_type": 0.01,
+     "component": 0.13,
+     "workflow_status": 0.0
+    },
+    "prefix": "focus",
+    "issues": 1
+   },
+   "focus: ux": {
+    "role": "attribute",
+    "confidence": 0.73,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.76,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.01,
+     "component": 0.2,
+     "other": 0.03
+    },
+    "prefix": "focus",
+    "issues": 5
+   },
+   "severity:S1": {
+    "role": "severity",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 1.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 0.0
+    },
+    "prefix": "severity",
+    "issues": 9
+   },
+   "severity:S2": {
+    "role": "severity",
+    "confidence": 1.0,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 1.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.0
+    },
+    "prefix": "severity",
+    "issues": 3
+   },
+   "comp:harness-t1": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "workflow_status": 0.0
+    },
+    "prefix": "comp",
+    "issues": 309
+   },
+   "comp:harness-t2": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "other": 0.0
+    },
+    "prefix": "comp",
+    "issues": 281
+   },
+   "comp:db": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "workflow_status": 0.0
+    },
+    "prefix": "comp",
+    "issues": 41
+   },
+   "comp:harness-t3": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "other": 0.0
+    },
+    "prefix": "comp",
+    "issues": 49
+   },
+   "comp:sandbox": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "other": 0.0
+    },
+    "prefix": "comp",
+    "issues": 73
+   },
+   "comp:android": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "workflow_status": 0.0
+    },
+    "prefix": "comp",
+    "issues": 19
+   },
+   "comp:ios": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "release": 0.0
+    },
+    "prefix": "comp",
+    "issues": 23
+   },
+   "comp:auth": {
+    "role": "component",
+    "confidence": 1.0,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 1.0,
+     "other": 0.0
+    },
+    "prefix": "comp",
+    "issues": 73
+   },
+   "git-credential": {
+    "role": "component",
+    "confidence": 0.67,
+    "probabilities": {
+     "workflow_status": 0.0,
+     "attribute": 0.14,
+     "priority": 0.0,
+     "other": 0.15,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.01,
+     "component": 0.7,
+     "release": 0.0
+    },
+    "prefix": null,
+    "issues": 1
+   },
+   "DNB": {
+    "role": "other",
+    "confidence": 0.4,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.07,
+     "priority": 0.0,
+     "workflow_status": 0.29000000000000004,
+     "maintainer_decision": 0.16,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "other": 0.48
+    },
+    "prefix": null,
+    "issues": 10
+   },
+   "validated:likely_repro": {
+    "role": "workflow_status",
+    "confidence": 0.96,
+    "probabilities": {
+     "release": 0.0,
+     "attribute": 0.02,
+     "priority": 0.0,
+     "other": 0.0,
+     "maintainer_decision": 0.01,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "workflow_status": 0.97
+    },
+    "prefix": "validated",
+    "issues": 47
+   },
+   "error-analysis-agent-created": {
+    "role": "workflow_status",
+    "confidence": 1.0,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 1.0,
+     "maintainer_decision": 0.0,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "release": 0.0
+    },
+    "prefix": null,
+    "issues": 4
+   },
+   "openui-trial": {
+    "role": "other",
+    "confidence": 0.51,
+    "probabilities": {
+     "other": 0.56,
+     "attribute": 0.34,
+     "priority": 0.0,
+     "release": 0.01,
+     "maintainer_decision": 0.03,
+     "severity": 0.0,
+     "issue_type": 0.01,
+     "component": 0.02,
+     "workflow_status": 0.02
+    },
+    "prefix": null,
+    "issues": 3
+   },
+   "approved": {
+    "role": "maintainer_decision",
+    "confidence": 0.98,
+    "probabilities": {
+     "other": 0.0,
+     "attribute": 0.0,
+     "priority": 0.0,
+     "workflow_status": 0.02,
+     "maintainer_decision": 0.98,
+     "severity": 0.0,
+     "issue_type": 0.0,
+     "component": 0.0,
+     "release": 0.0
+    },
+    "prefix": null,
+    "issues": 1
+   },
+   "focus: managed": {
+    "role": "attribute",
+    "confidence": 0.61,
+    "probabilities": {
+     "other": 0.08,
+     "attribute": 0.65,
+     "priority": 0.0,
+     "release": 0.0,
+     "maintainer_decision": 0.01,
+     "severity": 0.0,
+     "issue_type": 0.02,
+     "component": 0.24,
+     "workflow_status": 0.0
+    },
+    "prefix": "focus",
+    "issues": 1
+   }
+  },
+  "families": [
+   {
+    "key": "type",
+    "role": "issue_type",
+    "title": "type",
+    "labels": [
+     "Bug",
+     "Feature",
+     "Docs"
+    ],
+    "mode": "choice",
+    "descriptions": {
+     "Bug": "Something isn't working",
+     "Feature": "New feature or request",
+     "Docs": "Improvements or additions to documentation"
+    },
+    "usage": {
+     "Bug": "often",
+     "Feature": "often",
+     "Docs": "sometimes"
+    }
+   },
+   {
+    "key": "component",
+    "role": "component",
+    "title": "component",
+    "labels": [
+     "comp:web-ui",
+     "comp:server",
+     "comp:runner",
+     "comp:harnesses",
+     "comp:harness-t1",
+     "comp:harness-t2",
+     "comp:tui",
+     "comp:repr",
+     "comp:infra",
+     "comp:policies",
+     "comp:sandbox",
+     "comp:auth",
+     "comp:harness-t3",
+     "comp:db",
+     "comp:ios",
+     "comp:android",
+     "git-credential"
+    ],
+    "mode": "choice",
+    "descriptions": {
+     "comp:web-ui": "Component: web frontend (ap-web)",
+     "comp:server": "Component: server, API, session management",
+     "comp:runner": "Component: agent runner, execution engine",
+     "comp:harnesses": "Component: SDK harnesses (Claude, Cursor, etc.)",
+     "comp:harness-t1": "Highest-usage harnesses",
+     "comp:harness-t2": "Mainline harnesses",
+     "comp:tui": "Component: terminal UI, REPL, CLI",
+     "comp:repr": "Component: serialization, representation layer",
+     "comp:infra": "Component: CI/CD, Docker, deployment, packaging",
+     "comp:policies": "Component: safety policies, guardrails",
+     "comp:sandbox": "Sandbox isolation and egress",
+     "comp:auth": "Authentication and credentials",
+     "comp:harness-t3": "Lower-usage harnesses",
+     "comp:db": "Database, persistence, and migrations",
+     "comp:ios": "iOS app shell",
+     "comp:android": "Android app shell",
+     "git-credential": ""
+    },
+    "usage": {
+     "comp:web-ui": "often",
+     "comp:server": "often",
+     "comp:runner": "often",
+     "comp:harnesses": "often",
+     "comp:harness-t1": "often",
+     "comp:harness-t2": "often",
+     "comp:tui": "often",
+     "comp:repr": "often",
+     "comp:infra": "often",
+     "comp:policies": "often",
+     "comp:sandbox": "often",
+     "comp:auth": "often",
+     "comp:harness-t3": "sometimes",
+     "comp:db": "sometimes",
+     "comp:ios": "sometimes",
+     "comp:android": "sometimes",
+     "git-credential": "rarely"
+    }
+   },
+   {
+    "key": "priority",
+    "role": "priority",
+    "title": "priority",
+    "labels": [
+     "P2-medium",
+     "P1-high",
+     "P3-low",
+     "P0-critical"
+    ],
+    "mode": "choice",
+    "descriptions": {
+     "P2-medium": "Priority: bug with workaround, important feature request",
+     "P1-high": "Priority: major feature broken, no workaround",
+     "P3-low": "Priority: minor issue, cosmetic, nice-to-have",
+     "P0-critical": "Priority: service down, data loss, security vulnerability"
+    },
+    "usage": {
+     "P2-medium": "often",
+     "P1-high": "often",
+     "P3-low": "often",
+     "P0-critical": "sometimes"
+    }
+   },
+   {
+    "key": "severity",
+    "role": "severity",
+    "title": "severity",
+    "labels": [
+     "severity:S1",
+     "severity:S2"
+    ],
+    "mode": "choice",
+    "descriptions": {
+     "severity:S1": "High severity",
+     "severity:S2": "Medium severity"
+    },
+    "usage": {
+     "severity:S1": "sometimes",
+     "severity:S2": "rarely"
+    }
+   },
+   {
+    "key": "attribute",
+    "role": "attribute",
+    "title": "attributes",
+    "labels": [
+     "help wanted",
+     "needs-info",
+     "good first issue"
+    ],
+    "mode": "nouls",
+    "descriptions": {
+     "help wanted": "Extra attention is needed",
+     "needs-info": "Issue needs more information from the reporter",
+     "good first issue": "Good for newcomers"
+    },
+    "usage": {
+     "help wanted": "often",
+     "needs-info": "sometimes",
+     "good first issue": "rarely"
+    }
+   },
+   {
+    "key": "attribute_focus",
+    "role": "attribute",
+    "title": "attributes (focus\u2026)",
+    "labels": [
+     "focus: ux",
+     "focus: oss",
+     "focus: managed"
+    ],
+    "mode": "nouls",
+    "descriptions": {
+     "focus: ux": "",
+     "focus: oss": "",
+     "focus: managed": ""
+    },
+    "usage": {
+     "focus: ux": "sometimes",
+     "focus: oss": "rarely",
+     "focus: managed": "rarely"
+    }
+   }
+  ],
+  "ignored": {
+   "invalid": "never used on an issue",
+   "question": "never used on an issue",
+   "automerge": "only on pull requests",
+   "skip-e2e-ui-test": "only on pull requests",
+   "skip-security-scan": "only on pull requests",
+   "size/L": "only on pull requests",
+   "size/XL": "only on pull requests",
+   "e2e-approved": "only on pull requests",
+   "size/M": "only on pull requests",
+   "size/XS": "only on pull requests",
+   "size/S": "only on pull requests",
+   "spam-check": "never used on an issue",
+   "update-ui-snapshot": "only on pull requests",
+   "needs-doc-update": "only on pull requests",
+   "no-doc-update": "only on pull requests",
+   "dependencies": "only on pull requests",
+   "javascript": "only on pull requests",
+   "python": "only on pull requests",
+   "github_actions": "only on pull requests",
+   "ui-preview": "only on pull requests",
+   "python:uv": "only on pull requests",
+   "rust": "only on pull requests",
+   "area: oss": "never used on an issue",
+   "focus: community": "never used on an issue",
+   "Sandbox": "never used on an issue",
+   "waiting-for-review": "only on pull requests",
+   "severity:S0": "never used on an issue",
+   "severity:S3": "never used on an issue",
+   "needs-issue": "only on pull requests",
+   "Stack B (post-MVP)": "only on pull requests",
+   "duplicate": "a maintainer's decision, not in the text",
+   "wontfix": "a maintainer's decision, not in the text",
+   "approved": "a maintainer's decision, not in the text",
+   "DNB": "no clear role",
+   "openui-trial": "no clear role",
+   "0.3.0": "a release or version marker",
+   "0.5.0": "a release or version marker",
+   "triaged": "process or automation state",
+   "review-sla-escalated": "process or automation state",
+   "needs-triage": "process or automation state",
+   "validating": "process or automation state",
+   "nightly-failure": "process or automation state",
+   "error-analysis-agent-created": "process or automation state",
+   "stale": "process or automation state",
+   "needs-demo": "process or automation state",
+   "waiting-on-author": "process or automation state",
+   "validated:reproduced": "process or automation state",
+   "validated:already_fixed": "process or automation state",
+   "validated:likely_repro": "process or automation state",
+   "validated:needs_manual_review": "process or automation state",
+   "validated:not_reproduced": "process or automation state",
+   "validated:needs_more_info": "process or automation state"
+  },
+  "reading": null
+ },
+ "answers": {
+  "kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "feature": 0.0,
+    "question": 0.0,
+    "bug": 1.0,
+    "other": 0.0,
+    "chore": 0.0
+   },
+   "confidence": 1.0
+  },
+  "impact": {
+   "type": "score",
+   "score": 2.18,
+   "probabilities": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.8200000000000001,
+    "3": 0.18,
+    "4": 0.0
+   },
+   "levels": 5,
+   "confidence": 0.84
+  },
+  "clarity": {
+   "type": "score",
+   "score": 3.0,
+   "probabilities": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0,
+    "3": 1.0
+   },
+   "levels": 4,
+   "confidence": 1.0
+  },
+  "actionability": {
+   "type": "score",
+   "score": 2.89,
+   "probabilities": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.11,
+    "3": 0.89
+   },
+   "levels": 4,
+   "confidence": 0.89
+  },
+  "scope": {
+   "type": "score",
+   "score": 2.14,
+   "probabilities": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.85,
+    "3": 0.15
+   },
+   "levels": 4,
+   "confidence": 0.85
+  },
+  "frustration": {
+   "type": "score",
+   "score": 0.56,
+   "probabilities": {
+    "0": 0.44,
+    "1": 0.56,
+    "2": 0.0
+   },
+   "levels": 3,
+   "confidence": 0.35
+  },
+  "has_repro_steps": {
+   "type": "noul",
+   "noul": 0.97
+  },
+  "has_expected_vs_actual": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "has_environment": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "has_error_output": {
+   "type": "noul",
+   "noul": 0.25
+  },
+  "has_workaround": {
+   "type": "noul",
+   "noul": 0.96
+  },
+  "has_proposed_fix": {
+   "type": "noul",
+   "noul": 0.95
+  },
+  "multiple_problems": {
+   "type": "noul",
+   "noul": 0.11
+  },
+  "security_sensitive": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "low_effort": {
+   "type": "noul",
+   "noul": 0.02
+  },
+  "steers_triage": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "answered_in_thread": {
+   "type": "noul",
+   "noul": 0.08
+  },
+  "fixed_in_thread": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "waiting_on_reporter": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "reporter_confirmed": {
+   "type": "noul",
+   "noul": 0.02
+  },
+  "fam__type": {
+   "type": "choice",
+   "choice": "Bug",
+   "probabilities": {
+    "Feature": 0.0,
+    "Docs": 0.0,
+    "Bug": 1.0,
+    "none_fit": 0.0
+   },
+   "confidence": 1.0
+  },
+  "fam__component": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "none_fit": 0.0,
+    "comp:tui": 0.0,
+    "comp:harness-t1": 0.01,
+    "comp:infra": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.91,
+    "comp:harness-t2": 0.05,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "comp:policies": 0.01,
+    "comp:server": 0.0,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.02
+   },
+   "confidence": 0.9
+  },
+  "fam__priority": {
+   "type": "choice",
+   "choice": "P2-medium",
+   "probabilities": {
+    "P3-low": 0.0,
+    "P2-medium": 0.79,
+    "P1-high": 0.19,
+    "none_fit": 0.01,
+    "P0-critical": 0.01
+   },
+   "confidence": 0.74
+  },
+  "fam__severity": {
+   "type": "choice",
+   "choice": "severity:S1",
+   "probabilities": {
+    "severity:S1": 0.49,
+    "none_fit": 0.1,
+    "severity:S2": 0.41
+   },
+   "confidence": 0.23
+  },
+  "lab__attribute__0": {
+   "type": "noul",
+   "noul": 0.67
+  },
+  "lab__attribute__1": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "lab__attribute__2": {
+   "type": "noul",
+   "noul": 0.2
+  },
+  "lab__attribute_focus__0": {
+   "type": "noul",
+   "noul": 0.83
+  },
+  "lab__attribute_focus__1": {
+   "type": "noul",
+   "noul": 0.52
+  },
+  "lab__attribute_focus__2": {
+   "type": "noul",
+   "noul": 0.26
+  },
+  "dup__0__same": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "dup__0__related": {
+   "type": "noul",
+   "noul": 0.34
+  },
+  "dup__1__same": {
+   "type": "noul",
+   "noul": 0.13
+  },
+  "dup__1__related": {
+   "type": "noul",
+   "noul": 0.82
+  },
+  "dup__2__same": {
+   "type": "noul",
+   "noul": 0.16
+  },
+  "dup__2__related": {
+   "type": "noul",
+   "noul": 0.87
+  },
+  "dup__3__same": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "dup__3__related": {
+   "type": "noul",
+   "noul": 0.58
+  },
+  "dup__4__same": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "dup__4__related": {
+   "type": "noul",
+   "noul": 0.28
+  },
+  "dup__5__same": {
+   "type": "noul",
+   "noul": 0.11
+  },
+  "dup__5__related": {
+   "type": "noul",
+   "noul": 0.66
+  },
+  "u1__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.0,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 1.0,
+    "chore": 0.0
+   },
+   "confidence": 1.0
+  },
+  "u1__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.25,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.64,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.02,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.01,
+    "comp:policies": 0.03,
+    "comp:server": 0.0,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.61
+  },
+  "u2__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.0,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 1.0,
+    "chore": 0.0
+   },
+   "confidence": 1.0
+  },
+  "u2__comp": {
+   "type": "choice",
+   "choice": "comp:web-ui",
+   "probabilities": {
+    "comp:tui": 0.01,
+    "comp:harness-t1": 0.0,
+    "comp:infra": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.21,
+    "comp:harness-t2": 0.01,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.71,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.02,
+    "comp:policies": 0.02,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.0
+   },
+   "confidence": 0.7
+  },
+  "u3__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.07,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 0.93,
+    "chore": 0.0
+   },
+   "confidence": 0.91
+  },
+  "u3__comp": {
+   "type": "choice",
+   "choice": "comp:tui",
+   "probabilities": {
+    "comp:tui": 0.5,
+    "comp:harness-t1": 0.0,
+    "git-credential": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.1,
+    "comp:harness-t2": 0.0,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:infra": 0.0,
+    "comp:android": 0.0,
+    "comp:web-ui": 0.29,
+    "neutral": 0.1,
+    "comp:policies": 0.0,
+    "comp:server": 0.0,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.0
+   },
+   "confidence": 0.46
+  },
+  "u4__kind": {
+   "type": "choice",
+   "choice": "feature",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.0,
+    "question": 0.0,
+    "bug": 0.47,
+    "chore": 0.0,
+    "feature": 0.53
+   },
+   "confidence": 0.42
+  },
+  "u4__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.01,
+    "comp:harness-t1": 0.0,
+    "git-credential": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.39,
+    "comp:harness-t2": 0.01,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.26,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.18,
+    "comp:policies": 0.14,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.0
+   },
+   "confidence": 0.34
+  },
+  "u6__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.99,
+    "question": 0.0,
+    "bug": 0.01,
+    "chore": 0.0,
+    "feature": 0.0
+   },
+   "confidence": 0.98
+  },
+  "u6__comp": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "comp:tui": 0.0,
+    "comp:harness-t1": 0.0,
+    "comp:infra": 0.1,
+    "comp:runner": 0.02,
+    "comp:harnesses": 0.04,
+    "comp:harness-t2": 0.0,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.8,
+    "comp:policies": 0.0,
+    "comp:server": 0.04,
+    "comp:repr": 0.0,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.0
+   },
+   "confidence": 0.78
+  },
+  "u7__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.95,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 0.05,
+    "chore": 0.0
+   },
+   "confidence": 0.94
+  },
+  "u7__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.0,
+    "comp:harness-t1": 0.05,
+    "comp:infra": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.83,
+    "comp:harness-t2": 0.05,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.0,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.04,
+    "comp:policies": 0.0,
+    "comp:server": 0.02,
+    "comp:repr": 0.0,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.81
+  },
+  "u8__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.99,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 0.01,
+    "chore": 0.0
+   },
+   "confidence": 0.98
+  },
+  "u8__comp": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "comp:tui": 0.02,
+    "comp:harness-t1": 0.01,
+    "comp:infra": 0.14,
+    "comp:runner": 0.02,
+    "comp:harnesses": 0.07,
+    "comp:harness-t2": 0.01,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.72,
+    "comp:policies": 0.0,
+    "comp:server": 0.01,
+    "comp:repr": 0.0,
+    "comp:auth": 0.0,
+    "comp:harness-t3": 0.0,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.69
+  },
+  "u9__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.97,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 0.03,
+    "chore": 0.0
+   },
+   "confidence": 0.96
+  },
+  "u9__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.0,
+    "comp:harness-t1": 0.04,
+    "git-credential": 0.0,
+    "comp:runner": 0.15,
+    "comp:harnesses": 0.48,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.0,
+    "comp:android": 0.0,
+    "comp:infra": 0.01,
+    "neutral": 0.11,
+    "comp:policies": 0.13,
+    "comp:server": 0.03,
+    "comp:repr": 0.0,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.44
+  },
+  "u10__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.85,
+    "question": 0.0,
+    "bug": 0.15,
+    "chore": 0.0,
+    "feature": 0.0
+   },
+   "confidence": 0.81
+  },
+  "u10__comp": {
+   "type": "choice",
+   "choice": "comp:policies",
+   "probabilities": {
+    "comp:tui": 0.0,
+    "comp:harness-t1": 0.04,
+    "comp:infra": 0.01,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.22,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.09,
+    "comp:policies": 0.55,
+    "comp:server": 0.03,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.52
+  },
+  "u12__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.56,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 0.44,
+    "chore": 0.0
+   },
+   "confidence": 0.46
+  },
+  "u12__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.08,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.42,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.07,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.16,
+    "comp:policies": 0.17,
+    "comp:server": 0.02,
+    "comp:repr": 0.0,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.39
+  },
+  "u13__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.07,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 0.93,
+    "chore": 0.0
+   },
+   "confidence": 0.91
+  },
+  "u13__comp": {
+   "type": "choice",
+   "choice": "comp:tui",
+   "probabilities": {
+    "comp:tui": 0.41000000000000003,
+    "comp:harness-t1": 0.01,
+    "git-credential": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.25,
+    "comp:harness-t2": 0.01,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:infra": 0.0,
+    "comp:android": 0.0,
+    "comp:web-ui": 0.25,
+    "neutral": 0.02,
+    "comp:policies": 0.05,
+    "comp:server": 0.0,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:harness-t3": 0.0,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.36
+  },
+  "u14__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.02,
+    "question": 0.0,
+    "feature": 0.0,
+    "bug": 0.98,
+    "chore": 0.0
+   },
+   "confidence": 0.98
+  },
+  "u14__comp": {
+   "type": "choice",
+   "choice": "comp:web-ui",
+   "probabilities": {
+    "comp:tui": 0.08,
+    "comp:harness-t1": 0.01,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.33,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.46,
+    "comp:infra": 0.0,
+    "comp:android": 0.0,
+    "comp:db": 0.0,
+    "neutral": 0.03,
+    "comp:policies": 0.04,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.0
+   },
+   "confidence": 0.42
+  },
+  "u15__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.11,
+    "question": 0.0,
+    "bug": 0.89,
+    "feature": 0.0,
+    "chore": 0.0
+   },
+   "confidence": 0.86
+  },
+  "u15__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.26,
+    "comp:harness-t1": 0.01,
+    "git-credential": 0.0,
+    "comp:runner": 0.02,
+    "comp:harnesses": 0.29,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.24,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.09,
+    "comp:policies": 0.05,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:harness-t3": 0.0,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.25
+  },
+  "u17__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.4,
+    "question": 0.02,
+    "bug": 0.56,
+    "feature": 0.01,
+    "chore": 0.01
+   },
+   "confidence": 0.48
+  },
+  "u17__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.3,
+    "comp:harness-t1": 0.02,
+    "git-credential": 0.0,
+    "comp:runner": 0.02,
+    "comp:harnesses": 0.37,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:infra": 0.0,
+    "comp:android": 0.0,
+    "comp:web-ui": 0.06,
+    "neutral": 0.12,
+    "comp:policies": 0.07,
+    "comp:server": 0.01,
+    "comp:repr": 0.0,
+    "comp:auth": 0.0,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.32
+  },
+  "u18__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.6,
+    "question": 0.03,
+    "bug": 0.31,
+    "chore": 0.04,
+    "feature": 0.01
+   },
+   "confidence": 0.53
+  },
+  "u18__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.3,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.32,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.03,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.19,
+    "comp:policies": 0.09,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.27
+  },
+  "u19__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.34,
+    "question": 0.01,
+    "feature": 0.01,
+    "bug": 0.59,
+    "chore": 0.05
+   },
+   "confidence": 0.51
+  },
+  "u19__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.19,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.0,
+    "comp:runner": 0.02,
+    "comp:harnesses": 0.47000000000000003,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.07,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.09,
+    "comp:policies": 0.09,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.43
+  },
+  "u20__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.46,
+    "question": 0.01,
+    "feature": 0.01,
+    "bug": 0.49,
+    "chore": 0.03
+   },
+   "confidence": 0.4
+  },
+  "u20__comp": {
+   "type": "choice",
+   "choice": "comp:tui",
+   "probabilities": {
+    "comp:tui": 0.42,
+    "comp:harness-t1": 0.02,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.27,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.06,
+    "comp:infra": 0.0,
+    "comp:android": 0.0,
+    "comp:db": 0.0,
+    "neutral": 0.14,
+    "comp:policies": 0.05,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.0
+   },
+   "confidence": 0.37
+  },
+  "u21__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.33,
+    "question": 0.01,
+    "bug": 0.65,
+    "chore": 0.0,
+    "feature": 0.01
+   },
+   "confidence": 0.58
+  },
+  "u21__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.29,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.33,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.07,
+    "comp:android": 0.0,
+    "comp:infra": 0.01,
+    "neutral": 0.08,
+    "comp:policies": 0.14,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.29
+  },
+  "u22__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.44,
+    "question": 0.01,
+    "chore": 0.03,
+    "feature": 0.01,
+    "bug": 0.51
+   },
+   "confidence": 0.41
+  },
+  "u22__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.32,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.02,
+    "comp:harnesses": 0.33,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.05,
+    "comp:android": 0.0,
+    "comp:infra": 0.01,
+    "neutral": 0.11,
+    "comp:policies": 0.09,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.29
+  },
+  "u23__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.3,
+    "question": 0.01,
+    "feature": 0.03,
+    "bug": 0.65,
+    "chore": 0.01
+   },
+   "confidence": 0.56
+  },
+  "u23__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.13,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.02,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.52,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.06,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.06,
+    "comp:policies": 0.13,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.49
+  },
+  "u24__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.29,
+    "question": 0.01,
+    "feature": 0.16,
+    "bug": 0.52,
+    "chore": 0.01
+   },
+   "confidence": 0.44
+  },
+  "u24__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.06,
+    "comp:harness-t1": 0.01,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.64,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.06,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.07,
+    "comp:policies": 0.09,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.02,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.62
+  },
+  "u25__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.02,
+    "neutral": 0.21,
+    "question": 0.0,
+    "feature": 0.18,
+    "bug": 0.57,
+    "chore": 0.02
+   },
+   "confidence": 0.49
+  },
+  "u25__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.03,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.65,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.09,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.05,
+    "comp:policies": 0.08,
+    "comp:server": 0.02,
+    "comp:repr": 0.02,
+    "comp:auth": 0.0,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.63
+  },
+  "u26__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.0,
+    "neutral": 0.3,
+    "question": 0.01,
+    "chore": 0.01,
+    "feature": 0.2,
+    "bug": 0.48
+   },
+   "confidence": 0.37
+  },
+  "u26__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.06,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.62,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "git-credential": 0.0,
+    "comp:android": 0.0,
+    "comp:web-ui": 0.05,
+    "neutral": 0.11,
+    "comp:policies": 0.07,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.6
+  },
+  "u27__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.02,
+    "neutral": 0.22,
+    "question": 0.01,
+    "feature": 0.22,
+    "bug": 0.51,
+    "chore": 0.02
+   },
+   "confidence": 0.42
+  },
+  "u27__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.05,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.59,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.09,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.06,
+    "comp:policies": 0.11,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.02,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.56
+  },
+  "u28__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.27,
+    "question": 0.01,
+    "feature": 0.11,
+    "bug": 0.59,
+    "chore": 0.01
+   },
+   "confidence": 0.51
+  },
+  "u28__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.07,
+    "comp:harness-t1": 0.02,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.6,
+    "comp:harness-t2": 0.02,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.05,
+    "comp:android": 0.0,
+    "comp:infra": 0.01,
+    "neutral": 0.11,
+    "comp:policies": 0.08,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.57
+  },
+  "u29__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.34,
+    "question": 0.0,
+    "feature": 0.14,
+    "bug": 0.46,
+    "chore": 0.04
+   },
+   "confidence": 0.35
+  },
+  "u29__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.03,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.6,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.09,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.1,
+    "comp:policies": 0.08,
+    "comp:server": 0.02,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.58
+  },
+  "u31__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.28,
+    "question": 0.01,
+    "bug": 0.41,
+    "chore": 0.02,
+    "feature": 0.27
+   },
+   "confidence": 0.3
+  },
+  "u31__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.03,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.63,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.07,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.13,
+    "comp:policies": 0.04,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.59
+  },
+  "u32__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.3,
+    "question": 0.01,
+    "bug": 0.49,
+    "chore": 0.02,
+    "feature": 0.17
+   },
+   "confidence": 0.39
+  },
+  "u32__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.04,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.57,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.09,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.1,
+    "comp:policies": 0.09,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.54
+  },
+  "u33__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.32,
+    "question": 0.01,
+    "feature": 0.24,
+    "bug": 0.41,
+    "chore": 0.01
+   },
+   "confidence": 0.3
+  },
+  "u33__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.06,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.51,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.08,
+    "comp:android": 0.0,
+    "comp:infra": 0.01,
+    "neutral": 0.14,
+    "comp:policies": 0.1,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.48
+  },
+  "u34__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.02,
+    "neutral": 0.33,
+    "question": 0.01,
+    "bug": 0.47,
+    "feature": 0.12,
+    "chore": 0.05
+   },
+   "confidence": 0.38
+  },
+  "u34__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.04,
+    "comp:harness-t1": 0.04,
+    "comp:infra": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.55,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.12,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.09,
+    "comp:policies": 0.08,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.52
+  },
+  "u36__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.02,
+    "neutral": 0.4,
+    "question": 0.01,
+    "feature": 0.07,
+    "bug": 0.4,
+    "chore": 0.09
+   },
+   "confidence": 0.29
+  },
+  "u36__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.02,
+    "comp:harness-t1": 0.03,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.6,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.09,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.13,
+    "comp:policies": 0.05,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.56
+  },
+  "u37__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.35,
+    "question": 0.01,
+    "feature": 0.07,
+    "bug": 0.5,
+    "chore": 0.06
+   },
+   "confidence": 0.39
+  },
+  "u37__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.04,
+    "comp:harness-t1": 0.04,
+    "comp:infra": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.61,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.09,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.09,
+    "comp:policies": 0.05,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.57
+  },
+  "u38__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.3,
+    "question": 0.01,
+    "bug": 0.35,
+    "chore": 0.04,
+    "feature": 0.29
+   },
+   "confidence": 0.23
+  },
+  "u38__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.05,
+    "comp:harness-t1": 0.04,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.57,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.09,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.1,
+    "comp:policies": 0.07,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.54
+  },
+  "u39__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.29,
+    "question": 0.01,
+    "chore": 0.02,
+    "feature": 0.18,
+    "bug": 0.49
+   },
+   "confidence": 0.39
+  },
+  "u39__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.04,
+    "comp:harness-t1": 0.02,
+    "git-credential": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.59,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.12,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.09,
+    "comp:policies": 0.08,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.55
+  },
+  "u40__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.33,
+    "question": 0.01,
+    "bug": 0.42,
+    "feature": 0.21,
+    "chore": 0.02
+   },
+   "confidence": 0.3
+  },
+  "u40__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.03,
+    "comp:harness-t1": 0.02,
+    "comp:infra": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.67,
+    "comp:harness-t2": 0.03,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.05,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.1,
+    "comp:policies": 0.07,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.63
+  },
+  "u42__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.45,
+    "question": 0.01,
+    "feature": 0.06,
+    "bug": 0.4,
+    "chore": 0.07
+   },
+   "confidence": 0.34
+  },
+  "u42__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.04,
+    "comp:harness-t1": 0.04,
+    "git-credential": 0.0,
+    "comp:runner": 0.01,
+    "comp:harnesses": 0.61,
+    "comp:harness-t2": 0.05,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.07,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.1,
+    "comp:policies": 0.05,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.59
+  },
+  "u43__kind": {
+   "type": "choice",
+   "choice": "neutral",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.41,
+    "question": 0.01,
+    "feature": 0.09,
+    "bug": 0.41,
+    "chore": 0.07
+   },
+   "confidence": 0.3
+  },
+  "u43__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.02,
+    "comp:harness-t1": 0.04,
+    "git-credential": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.62,
+    "comp:harness-t2": 0.05,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.06,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.13,
+    "comp:policies": 0.05,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.59
+  },
+  "u44__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.38,
+    "question": 0.01,
+    "feature": 0.08,
+    "bug": 0.47,
+    "chore": 0.05
+   },
+   "confidence": 0.37
+  },
+  "u44__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.04,
+    "comp:harness-t1": 0.04,
+    "git-credential": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.63,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.08,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "comp:infra": 0.0,
+    "neutral": 0.09,
+    "comp:policies": 0.05,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.6
+  },
+  "u45__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.01,
+    "neutral": 0.28,
+    "question": 0.01,
+    "feature": 0.29,
+    "bug": 0.39,
+    "chore": 0.02
+   },
+   "confidence": 0.27
+  },
+  "u45__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.03,
+    "comp:harness-t1": 0.03,
+    "comp:infra": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.62,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:db": 0.0,
+    "comp:web-ui": 0.08,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.1,
+    "comp:policies": 0.07,
+    "comp:server": 0.01,
+    "comp:auth": 0.0,
+    "comp:repr": 0.01,
+    "comp:harness-t3": 0.01,
+    "comp:sandbox": 0.0
+   },
+   "confidence": 0.59
+  },
+  "u46__kind": {
+   "type": "choice",
+   "choice": "bug",
+   "probabilities": {
+    "docs": 0.02,
+    "neutral": 0.4,
+    "question": 0.01,
+    "bug": 0.43,
+    "feature": 0.09,
+    "chore": 0.05
+   },
+   "confidence": 0.33
+  },
+  "u46__comp": {
+   "type": "choice",
+   "choice": "comp:harnesses",
+   "probabilities": {
+    "comp:tui": 0.03,
+    "comp:harness-t1": 0.03,
+    "comp:infra": 0.0,
+    "comp:runner": 0.0,
+    "comp:harnesses": 0.63,
+    "comp:harness-t2": 0.04,
+    "comp:ios": 0.0,
+    "comp:web-ui": 0.11,
+    "comp:db": 0.0,
+    "comp:android": 0.0,
+    "git-credential": 0.0,
+    "neutral": 0.07,
+    "comp:policies": 0.06,
+    "comp:server": 0.01,
+    "comp:repr": 0.01,
+    "comp:auth": 0.0,
+    "comp:sandbox": 0.0,
+    "comp:harness-t3": 0.01
+   },
+   "confidence": 0.6
+  }
+ },
+ "usage": {
+  "model": "jev-1.13.0",
+  "input_tokens": 44555,
+  "latency_s": 1.101,
+  "cost_usd": 0.00187131,
+  "cached": true,
+  "defanged": 0,
+  "questions": 122
+ }
+}

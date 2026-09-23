@@ -1,0 +1,597 @@
+{
+ "owner": "omnigent-ai",
+ "name": "omnigent",
+ "description": "Omnigent is an open-source AI agent framework and meta-harness: orchestrate Claude Code, Codex, Cursor, Pi, and custom agents \u2014 swap harnesses without rewriting, enforce policies and sandboxing, and collaborate in real time from any device.",
+ "url": "https://github.com/omnigent-ai/omnigent",
+ "open_issues": 543,
+ "labels": [
+  {
+   "name": "Bug",
+   "description": "Something isn't working",
+   "color": "EB5757",
+   "issues": 1159,
+   "pull_requests": 0
+  },
+  {
+   "name": "Docs",
+   "description": "Improvements or additions to documentation",
+   "color": "0075ca",
+   "issues": 14,
+   "pull_requests": 0
+  },
+  {
+   "name": "duplicate",
+   "description": "This issue or pull request already exists",
+   "color": "cfd3d7",
+   "issues": 20,
+   "pull_requests": 74
+  },
+  {
+   "name": "Feature",
+   "description": "New feature or request",
+   "color": "BB87FC",
+   "issues": 536,
+   "pull_requests": 1
+  },
+  {
+   "name": "good first issue",
+   "description": "Good for newcomers",
+   "color": "7057ff",
+   "issues": 1,
+   "pull_requests": 0
+  },
+  {
+   "name": "help wanted",
+   "description": "Extra attention is needed",
+   "color": "008672",
+   "issues": 723,
+   "pull_requests": 0
+  },
+  {
+   "name": "invalid",
+   "description": "This doesn't seem right",
+   "color": "e4e669",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "question",
+   "description": "Further information is requested",
+   "color": "d876e3",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "wontfix",
+   "description": "This will not be worked on",
+   "color": "ffffff",
+   "issues": 1,
+   "pull_requests": 0
+  },
+  {
+   "name": "automerge",
+   "description": "Automatically Run Merge CI",
+   "color": "0FC023",
+   "issues": 0,
+   "pull_requests": 368
+  },
+  {
+   "name": "skip-e2e-ui-test",
+   "description": "",
+   "color": "9E5BB3",
+   "issues": 0,
+   "pull_requests": 247
+  },
+  {
+   "name": "skip-security-scan",
+   "description": "Skip security gate",
+   "color": "DDB4BB",
+   "issues": 0,
+   "pull_requests": 58
+  },
+  {
+   "name": "size/L",
+   "description": "Pull request size: L",
+   "color": "ededed",
+   "issues": 0,
+   "pull_requests": 1424
+  },
+  {
+   "name": "size/XL",
+   "description": "Pull request size: XL",
+   "color": "ededed",
+   "issues": 0,
+   "pull_requests": 1802
+  },
+  {
+   "name": "e2e-approved",
+   "description": "Maintainer approval to run secret-bearing e2e on a fork PR",
+   "color": "0E8A16",
+   "issues": 0,
+   "pull_requests": 59
+  },
+  {
+   "name": "size/M",
+   "description": "Pull request size: M",
+   "color": "ededed",
+   "issues": 0,
+   "pull_requests": 1647
+  },
+  {
+   "name": "size/XS",
+   "description": "Pull request size: XS",
+   "color": "ededed",
+   "issues": 0,
+   "pull_requests": 417
+  },
+  {
+   "name": "size/S",
+   "description": "Pull request size: S",
+   "color": "ededed",
+   "issues": 0,
+   "pull_requests": 765
+  },
+  {
+   "name": "needs-triage",
+   "description": "",
+   "color": "ededed",
+   "issues": 8,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:server",
+   "description": "Component: server, API, session management",
+   "color": "c5def5",
+   "issues": 567,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:repr",
+   "description": "Component: serialization, representation layer",
+   "color": "c5def5",
+   "issues": 145,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:runner",
+   "description": "Component: agent runner, execution engine",
+   "color": "c5def5",
+   "issues": 390,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:policies",
+   "description": "Component: safety policies, guardrails",
+   "color": "c5def5",
+   "issues": 82,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:web-ui",
+   "description": "Component: web frontend (ap-web)",
+   "color": "c5def5",
+   "issues": 576,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:harnesses",
+   "description": "Component: SDK harnesses (Claude, Cursor, etc.)",
+   "color": "c5def5",
+   "issues": 321,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:infra",
+   "description": "Component: CI/CD, Docker, deployment, packaging",
+   "color": "c5def5",
+   "issues": 121,
+   "pull_requests": 0
+  },
+  {
+   "name": "P0-critical",
+   "description": "Priority: service down, data loss, security vulnerability",
+   "color": "d73a4a",
+   "issues": 23,
+   "pull_requests": 12
+  },
+  {
+   "name": "P1-high",
+   "description": "Priority: major feature broken, no workaround",
+   "color": "e99695",
+   "issues": 404,
+   "pull_requests": 267
+  },
+  {
+   "name": "P2-medium",
+   "description": "Priority: bug with workaround, important feature request",
+   "color": "fbca04",
+   "issues": 1158,
+   "pull_requests": 793
+  },
+  {
+   "name": "needs-info",
+   "description": "Issue needs more information from the reporter",
+   "color": "d876e3",
+   "issues": 16,
+   "pull_requests": 0
+  },
+  {
+   "name": "P3-low",
+   "description": "Priority: minor issue, cosmetic, nice-to-have",
+   "color": "0e8a16",
+   "issues": 121,
+   "pull_requests": 72
+  },
+  {
+   "name": "triaged",
+   "description": "Issue has been triaged by the bot",
+   "color": "0075ca",
+   "issues": 1689,
+   "pull_requests": 0
+  },
+  {
+   "name": "spam-check",
+   "description": "Auto-flagged as possible spam/abuse; needs maintainer triage",
+   "color": "b60205",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "update-ui-snapshot",
+   "description": "Used to tell CI that the baseline UI snapshot should be regenerated",
+   "color": "E52671",
+   "issues": 0,
+   "pull_requests": 7
+  },
+  {
+   "name": "comp:tui",
+   "description": "Component: terminal UI, REPL, CLI",
+   "color": "c5def5",
+   "issues": 198,
+   "pull_requests": 0
+  },
+  {
+   "name": "0.3.0",
+   "description": "",
+   "color": "26b5ce",
+   "issues": 9,
+   "pull_requests": 0
+  },
+  {
+   "name": "needs-doc-update",
+   "description": "Merged PR needs a user-facing docs update",
+   "color": "0E8A16",
+   "issues": 0,
+   "pull_requests": 295
+  },
+  {
+   "name": "no-doc-update",
+   "description": "Merged PR does not need a docs update",
+   "color": "C5DEF5",
+   "issues": 0,
+   "pull_requests": 2736
+  },
+  {
+   "name": "dependencies",
+   "description": "Pull requests that update a dependency file",
+   "color": "0366d6",
+   "issues": 0,
+   "pull_requests": 55
+  },
+  {
+   "name": "javascript",
+   "description": "Pull requests that update javascript code",
+   "color": "168700",
+   "issues": 0,
+   "pull_requests": 37
+  },
+  {
+   "name": "python",
+   "description": "Pull requests that update python code",
+   "color": "2b67c6",
+   "issues": 0,
+   "pull_requests": 6
+  },
+  {
+   "name": "github_actions",
+   "description": "Pull requests that update GitHub Actions code",
+   "color": "000000",
+   "issues": 0,
+   "pull_requests": 1
+  },
+  {
+   "name": "ui-preview",
+   "description": "",
+   "color": "BAAACE",
+   "issues": 0,
+   "pull_requests": 699
+  },
+  {
+   "name": "needs-demo",
+   "description": "PR needs a demo screenshot or recording",
+   "color": "e4e669",
+   "issues": 1,
+   "pull_requests": 541
+  },
+  {
+   "name": "nightly-failure",
+   "description": "A scheduled/nightly test suite failed on consecutive runs",
+   "color": "b60205",
+   "issues": 6,
+   "pull_requests": 0
+  },
+  {
+   "name": "0.5.0",
+   "description": "",
+   "color": "4cb782",
+   "issues": 2,
+   "pull_requests": 0
+  },
+  {
+   "name": "review-sla-escalated",
+   "description": "",
+   "color": "ededed",
+   "issues": 102,
+   "pull_requests": 168
+  },
+  {
+   "name": "python:uv",
+   "description": "Pull requests that update python:uv code",
+   "color": "2b67c6",
+   "issues": 0,
+   "pull_requests": 8
+  },
+  {
+   "name": "waiting-on-author",
+   "description": "",
+   "color": "65d9a6",
+   "issues": 1,
+   "pull_requests": 64
+  },
+  {
+   "name": "stale",
+   "description": "",
+   "color": "ededed",
+   "issues": 3,
+   "pull_requests": 0
+  },
+  {
+   "name": "rust",
+   "description": "Pull requests that update rust code",
+   "color": "000000",
+   "issues": 0,
+   "pull_requests": 3
+  },
+  {
+   "name": "validated:reproduced",
+   "description": "Repro agent validated the issue can be reproduced",
+   "color": "c40e0f",
+   "issues": 629,
+   "pull_requests": 0
+  },
+  {
+   "name": "validated:not_reproduced",
+   "description": "Repro agent cannot reproduce the issue",
+   "color": "5e6ad2",
+   "issues": 15,
+   "pull_requests": 0
+  },
+  {
+   "name": "validated:already_fixed",
+   "description": "Repro agent validated the issue is already fixed",
+   "color": "418110",
+   "issues": 102,
+   "pull_requests": 0
+  },
+  {
+   "name": "validated:needs_more_info",
+   "description": "Repro agent needs more information to validate the issue",
+   "color": "5e6ad2",
+   "issues": 3,
+   "pull_requests": 0
+  },
+  {
+   "name": "validated:needs_manual_review",
+   "description": "Repro agent can't work on this issue, needs human review",
+   "color": "5e6ad2",
+   "issues": 22,
+   "pull_requests": 0
+  },
+  {
+   "name": "validating",
+   "description": "Repro agent is validating this issue",
+   "color": "e2e2e2",
+   "issues": 7,
+   "pull_requests": 0
+  },
+  {
+   "name": "area: oss",
+   "description": "",
+   "color": "eb5757",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "focus: oss",
+   "description": "",
+   "color": "4EA7FC",
+   "issues": 1,
+   "pull_requests": 0
+  },
+  {
+   "name": "focus: ux",
+   "description": "",
+   "color": "4EA7FC",
+   "issues": 5,
+   "pull_requests": 0
+  },
+  {
+   "name": "focus: community",
+   "description": "",
+   "color": "4EA7FC",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "Sandbox",
+   "description": "",
+   "color": "f7c8c1",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "waiting-for-review",
+   "description": "",
+   "color": "ededed",
+   "issues": 0,
+   "pull_requests": 553
+  },
+  {
+   "name": "severity:S0",
+   "description": "Critical severity",
+   "color": "8b0000",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "severity:S1",
+   "description": "High severity",
+   "color": "d93f0b",
+   "issues": 9,
+   "pull_requests": 0
+  },
+  {
+   "name": "severity:S2",
+   "description": "Medium severity",
+   "color": "fbca04",
+   "issues": 3,
+   "pull_requests": 0
+  },
+  {
+   "name": "severity:S3",
+   "description": "Low or uncertain severity",
+   "color": "c5def5",
+   "issues": 0,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:harness-t1",
+   "description": "Highest-usage harnesses",
+   "color": "5319e7",
+   "issues": 309,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:harness-t2",
+   "description": "Mainline harnesses",
+   "color": "7057ff",
+   "issues": 281,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:db",
+   "description": "Database, persistence, and migrations",
+   "color": "0e8a16",
+   "issues": 41,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:harness-t3",
+   "description": "Lower-usage harnesses",
+   "color": "bfd4f2",
+   "issues": 49,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:sandbox",
+   "description": "Sandbox isolation and egress",
+   "color": "b60205",
+   "issues": 73,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:android",
+   "description": "Android app shell",
+   "color": "3ddc84",
+   "issues": 19,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:ios",
+   "description": "iOS app shell",
+   "color": "1d76db",
+   "issues": 23,
+   "pull_requests": 0
+  },
+  {
+   "name": "comp:auth",
+   "description": "Authentication and credentials",
+   "color": "0052cc",
+   "issues": 73,
+   "pull_requests": 0
+  },
+  {
+   "name": "git-credential",
+   "description": "",
+   "color": "26b5ce",
+   "issues": 1,
+   "pull_requests": 0
+  },
+  {
+   "name": "needs-issue",
+   "description": "PR references no issue; closed after 7 days",
+   "color": "d93f0b",
+   "issues": 0,
+   "pull_requests": 58
+  },
+  {
+   "name": "Stack B (post-MVP)",
+   "description": "Deferred post-MVP extension framework stack",
+   "color": "8250DF",
+   "issues": 0,
+   "pull_requests": 3
+  },
+  {
+   "name": "DNB",
+   "description": "",
+   "color": "f7c8c1",
+   "issues": 10,
+   "pull_requests": 0
+  },
+  {
+   "name": "validated:likely_repro",
+   "description": "",
+   "color": "eb5757",
+   "issues": 47,
+   "pull_requests": 0
+  },
+  {
+   "name": "error-analysis-agent-created",
+   "description": "",
+   "color": "f2c94c",
+   "issues": 4,
+   "pull_requests": 0
+  },
+  {
+   "name": "openui-trial",
+   "description": "",
+   "color": "eb5757",
+   "issues": 3,
+   "pull_requests": 0
+  },
+  {
+   "name": "approved",
+   "description": "",
+   "color": "5e6ad2",
+   "issues": 1,
+   "pull_requests": 0
+  },
+  {
+   "name": "focus: managed",
+   "description": "",
+   "color": "4EA7FC",
+   "issues": 1,
+   "pull_requests": 0
+  }
+ ]
+}

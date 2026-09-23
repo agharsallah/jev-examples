@@ -1,0 +1,1148 @@
+{
+ "repo": "omnigent-ai/omnigent",
+ "roles": {
+  "Bug": {
+   "role": "issue_type",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 1.0,
+    "component": 0.0,
+    "workflow_status": 0.0
+   },
+   "prefix": null,
+   "issues": 1159
+  },
+  "Docs": {
+   "role": "issue_type",
+   "confidence": 0.99,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.99,
+    "component": 0.01,
+    "other": 0.0
+   },
+   "prefix": null,
+   "issues": 14
+  },
+  "duplicate": {
+   "role": "maintainer_decision",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 1.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": null,
+   "issues": 20
+  },
+  "Feature": {
+   "role": "issue_type",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 1.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": null,
+   "issues": 536
+  },
+  "good first issue": {
+   "role": "attribute",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 1.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 0.0
+   },
+   "prefix": null,
+   "issues": 1
+  },
+  "help wanted": {
+   "role": "attribute",
+   "confidence": 0.8,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.82,
+    "priority": 0.0,
+    "workflow_status": 0.14,
+    "maintainer_decision": 0.02,
+    "severity": 0.0,
+    "issue_type": 0.01,
+    "component": 0.0,
+    "other": 0.01
+   },
+   "prefix": null,
+   "issues": 723
+  },
+  "wontfix": {
+   "role": "maintainer_decision",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 1.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": null,
+   "issues": 1
+  },
+  "needs-triage": {
+   "role": "workflow_status",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 1.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "release": 0.0
+   },
+   "prefix": null,
+   "issues": 8
+  },
+  "comp:server": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "release": 0.0
+   },
+   "prefix": "comp",
+   "issues": 567
+  },
+  "comp:repr": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "other": 0.0
+   },
+   "prefix": "comp",
+   "issues": 145
+  },
+  "comp:runner": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "other": 0.0
+   },
+   "prefix": "comp",
+   "issues": 390
+  },
+  "comp:policies": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "release": 0.0
+   },
+   "prefix": "comp",
+   "issues": 82
+  },
+  "comp:web-ui": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "workflow_status": 0.0
+   },
+   "prefix": "comp",
+   "issues": 576
+  },
+  "comp:harnesses": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "release": 0.0
+   },
+   "prefix": "comp",
+   "issues": 321
+  },
+  "comp:infra": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "workflow_status": 0.0
+   },
+   "prefix": "comp",
+   "issues": 121
+  },
+  "P0-critical": {
+   "role": "priority",
+   "confidence": 0.97,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 0.98,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.02,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": "p",
+   "issues": 23
+  },
+  "P1-high": {
+   "role": "priority",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 1.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": "p",
+   "issues": 404
+  },
+  "P2-medium": {
+   "role": "priority",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 1.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "release": 0.0
+   },
+   "prefix": "p",
+   "issues": 1158
+  },
+  "needs-info": {
+   "role": "attribute",
+   "confidence": 0.58,
+   "probabilities": {
+    "workflow_status": 0.37,
+    "attribute": 0.63,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": null,
+   "issues": 16
+  },
+  "P3-low": {
+   "role": "priority",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 1.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "release": 0.0
+   },
+   "prefix": "p",
+   "issues": 121
+  },
+  "triaged": {
+   "role": "workflow_status",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 1.0
+   },
+   "prefix": null,
+   "issues": 1689
+  },
+  "comp:tui": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "other": 0.0
+   },
+   "prefix": "comp",
+   "issues": 198
+  },
+  "0.3.0": {
+   "role": "release",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 1.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 0.0
+   },
+   "prefix": null,
+   "issues": 9
+  },
+  "needs-demo": {
+   "role": "workflow_status",
+   "confidence": 0.55,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.39,
+    "priority": 0.0,
+    "workflow_status": 0.61,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": null,
+   "issues": 1
+  },
+  "nightly-failure": {
+   "role": "workflow_status",
+   "confidence": 0.35,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.37,
+    "priority": 0.0,
+    "workflow_status": 0.42,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.2,
+    "component": 0.0,
+    "other": 0.01
+   },
+   "prefix": null,
+   "issues": 6
+  },
+  "0.5.0": {
+   "role": "release",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 1.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 0.0
+   },
+   "prefix": null,
+   "issues": 2
+  },
+  "review-sla-escalated": {
+   "role": "workflow_status",
+   "confidence": 0.99,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 1.0
+   },
+   "prefix": null,
+   "issues": 102
+  },
+  "waiting-on-author": {
+   "role": "workflow_status",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 1.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": null,
+   "issues": 1
+  },
+  "stale": {
+   "role": "workflow_status",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 1.0
+   },
+   "prefix": null,
+   "issues": 3
+  },
+  "validated:reproduced": {
+   "role": "workflow_status",
+   "confidence": 0.98,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.01,
+    "priority": 0.0,
+    "workflow_status": 0.99,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": "validated",
+   "issues": 629
+  },
+  "validated:not_reproduced": {
+   "role": "workflow_status",
+   "confidence": 0.97,
+   "probabilities": {
+    "workflow_status": 0.98,
+    "attribute": 0.01,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.01,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": "validated",
+   "issues": 15
+  },
+  "validated:already_fixed": {
+   "role": "workflow_status",
+   "confidence": 0.97,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.01,
+    "priority": 0.0,
+    "workflow_status": 0.97,
+    "maintainer_decision": 0.02,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": "validated",
+   "issues": 102
+  },
+  "validated:needs_more_info": {
+   "role": "workflow_status",
+   "confidence": 0.98,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.02,
+    "priority": 0.0,
+    "workflow_status": 0.98,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": "validated",
+   "issues": 3
+  },
+  "validated:needs_manual_review": {
+   "role": "workflow_status",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 1.0
+   },
+   "prefix": "validated",
+   "issues": 22
+  },
+  "validating": {
+   "role": "workflow_status",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 1.0
+   },
+   "prefix": null,
+   "issues": 7
+  },
+  "focus: oss": {
+   "role": "attribute",
+   "confidence": 0.7,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.72,
+    "priority": 0.0,
+    "other": 0.12,
+    "maintainer_decision": 0.02,
+    "severity": 0.0,
+    "issue_type": 0.01,
+    "component": 0.13,
+    "workflow_status": 0.0
+   },
+   "prefix": "focus",
+   "issues": 1
+  },
+  "focus: ux": {
+   "role": "attribute",
+   "confidence": 0.73,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.76,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.01,
+    "component": 0.2,
+    "other": 0.03
+   },
+   "prefix": "focus",
+   "issues": 5
+  },
+  "severity:S1": {
+   "role": "severity",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 1.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 0.0
+   },
+   "prefix": "severity",
+   "issues": 9
+  },
+  "severity:S2": {
+   "role": "severity",
+   "confidence": 1.0,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 1.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.0
+   },
+   "prefix": "severity",
+   "issues": 3
+  },
+  "comp:harness-t1": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "workflow_status": 0.0
+   },
+   "prefix": "comp",
+   "issues": 309
+  },
+  "comp:harness-t2": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "other": 0.0
+   },
+   "prefix": "comp",
+   "issues": 281
+  },
+  "comp:db": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "workflow_status": 0.0
+   },
+   "prefix": "comp",
+   "issues": 41
+  },
+  "comp:harness-t3": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "other": 0.0
+   },
+   "prefix": "comp",
+   "issues": 49
+  },
+  "comp:sandbox": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "other": 0.0
+   },
+   "prefix": "comp",
+   "issues": 73
+  },
+  "comp:android": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "workflow_status": 0.0
+   },
+   "prefix": "comp",
+   "issues": 19
+  },
+  "comp:ios": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "release": 0.0
+   },
+   "prefix": "comp",
+   "issues": 23
+  },
+  "comp:auth": {
+   "role": "component",
+   "confidence": 1.0,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 1.0,
+    "other": 0.0
+   },
+   "prefix": "comp",
+   "issues": 73
+  },
+  "git-credential": {
+   "role": "component",
+   "confidence": 0.67,
+   "probabilities": {
+    "workflow_status": 0.0,
+    "attribute": 0.14,
+    "priority": 0.0,
+    "other": 0.15,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.01,
+    "component": 0.7,
+    "release": 0.0
+   },
+   "prefix": null,
+   "issues": 1
+  },
+  "DNB": {
+   "role": "other",
+   "confidence": 0.4,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.07,
+    "priority": 0.0,
+    "workflow_status": 0.29000000000000004,
+    "maintainer_decision": 0.16,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "other": 0.48
+   },
+   "prefix": null,
+   "issues": 10
+  },
+  "validated:likely_repro": {
+   "role": "workflow_status",
+   "confidence": 0.96,
+   "probabilities": {
+    "release": 0.0,
+    "attribute": 0.02,
+    "priority": 0.0,
+    "other": 0.0,
+    "maintainer_decision": 0.01,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "workflow_status": 0.97
+   },
+   "prefix": "validated",
+   "issues": 47
+  },
+  "error-analysis-agent-created": {
+   "role": "workflow_status",
+   "confidence": 1.0,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 1.0,
+    "maintainer_decision": 0.0,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "release": 0.0
+   },
+   "prefix": null,
+   "issues": 4
+  },
+  "openui-trial": {
+   "role": "other",
+   "confidence": 0.51,
+   "probabilities": {
+    "other": 0.56,
+    "attribute": 0.34,
+    "priority": 0.0,
+    "release": 0.01,
+    "maintainer_decision": 0.03,
+    "severity": 0.0,
+    "issue_type": 0.01,
+    "component": 0.02,
+    "workflow_status": 0.02
+   },
+   "prefix": null,
+   "issues": 3
+  },
+  "approved": {
+   "role": "maintainer_decision",
+   "confidence": 0.98,
+   "probabilities": {
+    "other": 0.0,
+    "attribute": 0.0,
+    "priority": 0.0,
+    "workflow_status": 0.02,
+    "maintainer_decision": 0.98,
+    "severity": 0.0,
+    "issue_type": 0.0,
+    "component": 0.0,
+    "release": 0.0
+   },
+   "prefix": null,
+   "issues": 1
+  },
+  "focus: managed": {
+   "role": "attribute",
+   "confidence": 0.61,
+   "probabilities": {
+    "other": 0.08,
+    "attribute": 0.65,
+    "priority": 0.0,
+    "release": 0.0,
+    "maintainer_decision": 0.01,
+    "severity": 0.0,
+    "issue_type": 0.02,
+    "component": 0.24,
+    "workflow_status": 0.0
+   },
+   "prefix": "focus",
+   "issues": 1
+  }
+ },
+ "families": [
+  {
+   "key": "type",
+   "role": "issue_type",
+   "title": "type",
+   "labels": [
+    "Bug",
+    "Feature",
+    "Docs"
+   ],
+   "mode": "choice",
+   "descriptions": {
+    "Bug": "Something isn't working",
+    "Feature": "New feature or request",
+    "Docs": "Improvements or additions to documentation"
+   },
+   "usage": {
+    "Bug": "often",
+    "Feature": "often",
+    "Docs": "sometimes"
+   }
+  },
+  {
+   "key": "component",
+   "role": "component",
+   "title": "component",
+   "labels": [
+    "comp:web-ui",
+    "comp:server",
+    "comp:runner",
+    "comp:harnesses",
+    "comp:harness-t1",
+    "comp:harness-t2",
+    "comp:tui",
+    "comp:repr",
+    "comp:infra",
+    "comp:policies",
+    "comp:sandbox",
+    "comp:auth",
+    "comp:harness-t3",
+    "comp:db",
+    "comp:ios",
+    "comp:android",
+    "git-credential"
+   ],
+   "mode": "choice",
+   "descriptions": {
+    "comp:web-ui": "Component: web frontend (ap-web)",
+    "comp:server": "Component: server, API, session management",
+    "comp:runner": "Component: agent runner, execution engine",
+    "comp:harnesses": "Component: SDK harnesses (Claude, Cursor, etc.)",
+    "comp:harness-t1": "Highest-usage harnesses",
+    "comp:harness-t2": "Mainline harnesses",
+    "comp:tui": "Component: terminal UI, REPL, CLI",
+    "comp:repr": "Component: serialization, representation layer",
+    "comp:infra": "Component: CI/CD, Docker, deployment, packaging",
+    "comp:policies": "Component: safety policies, guardrails",
+    "comp:sandbox": "Sandbox isolation and egress",
+    "comp:auth": "Authentication and credentials",
+    "comp:harness-t3": "Lower-usage harnesses",
+    "comp:db": "Database, persistence, and migrations",
+    "comp:ios": "iOS app shell",
+    "comp:android": "Android app shell",
+    "git-credential": ""
+   },
+   "usage": {
+    "comp:web-ui": "often",
+    "comp:server": "often",
+    "comp:runner": "often",
+    "comp:harnesses": "often",
+    "comp:harness-t1": "often",
+    "comp:harness-t2": "often",
+    "comp:tui": "often",
+    "comp:repr": "often",
+    "comp:infra": "often",
+    "comp:policies": "often",
+    "comp:sandbox": "often",
+    "comp:auth": "often",
+    "comp:harness-t3": "sometimes",
+    "comp:db": "sometimes",
+    "comp:ios": "sometimes",
+    "comp:android": "sometimes",
+    "git-credential": "rarely"
+   }
+  },
+  {
+   "key": "priority",
+   "role": "priority",
+   "title": "priority",
+   "labels": [
+    "P2-medium",
+    "P1-high",
+    "P3-low",
+    "P0-critical"
+   ],
+   "mode": "choice",
+   "descriptions": {
+    "P2-medium": "Priority: bug with workaround, important feature request",
+    "P1-high": "Priority: major feature broken, no workaround",
+    "P3-low": "Priority: minor issue, cosmetic, nice-to-have",
+    "P0-critical": "Priority: service down, data loss, security vulnerability"
+   },
+   "usage": {
+    "P2-medium": "often",
+    "P1-high": "often",
+    "P3-low": "often",
+    "P0-critical": "sometimes"
+   }
+  },
+  {
+   "key": "severity",
+   "role": "severity",
+   "title": "severity",
+   "labels": [
+    "severity:S1",
+    "severity:S2"
+   ],
+   "mode": "choice",
+   "descriptions": {
+    "severity:S1": "High severity",
+    "severity:S2": "Medium severity"
+   },
+   "usage": {
+    "severity:S1": "sometimes",
+    "severity:S2": "rarely"
+   }
+  },
+  {
+   "key": "attribute",
+   "role": "attribute",
+   "title": "attributes",
+   "labels": [
+    "help wanted",
+    "needs-info",
+    "good first issue"
+   ],
+   "mode": "nouls",
+   "descriptions": {
+    "help wanted": "Extra attention is needed",
+    "needs-info": "Issue needs more information from the reporter",
+    "good first issue": "Good for newcomers"
+   },
+   "usage": {
+    "help wanted": "often",
+    "needs-info": "sometimes",
+    "good first issue": "rarely"
+   }
+  },
+  {
+   "key": "attribute_focus",
+   "role": "attribute",
+   "title": "attributes (focus\u2026)",
+   "labels": [
+    "focus: ux",
+    "focus: oss",
+    "focus: managed"
+   ],
+   "mode": "nouls",
+   "descriptions": {
+    "focus: ux": "",
+    "focus: oss": "",
+    "focus: managed": ""
+   },
+   "usage": {
+    "focus: ux": "sometimes",
+    "focus: oss": "rarely",
+    "focus: managed": "rarely"
+   }
+  }
+ ],
+ "ignored": {
+  "invalid": "never used on an issue",
+  "question": "never used on an issue",
+  "automerge": "only on pull requests",
+  "skip-e2e-ui-test": "only on pull requests",
+  "skip-security-scan": "only on pull requests",
+  "size/L": "only on pull requests",
+  "size/XL": "only on pull requests",
+  "e2e-approved": "only on pull requests",
+  "size/M": "only on pull requests",
+  "size/XS": "only on pull requests",
+  "size/S": "only on pull requests",
+  "spam-check": "never used on an issue",
+  "update-ui-snapshot": "only on pull requests",
+  "needs-doc-update": "only on pull requests",
+  "no-doc-update": "only on pull requests",
+  "dependencies": "only on pull requests",
+  "javascript": "only on pull requests",
+  "python": "only on pull requests",
+  "github_actions": "only on pull requests",
+  "ui-preview": "only on pull requests",
+  "python:uv": "only on pull requests",
+  "rust": "only on pull requests",
+  "area: oss": "never used on an issue",
+  "focus: community": "never used on an issue",
+  "Sandbox": "never used on an issue",
+  "waiting-for-review": "only on pull requests",
+  "severity:S0": "never used on an issue",
+  "severity:S3": "never used on an issue",
+  "needs-issue": "only on pull requests",
+  "Stack B (post-MVP)": "only on pull requests",
+  "duplicate": "a maintainer's decision, not in the text",
+  "wontfix": "a maintainer's decision, not in the text",
+  "approved": "a maintainer's decision, not in the text",
+  "DNB": "no clear role",
+  "openui-trial": "no clear role",
+  "0.3.0": "a release or version marker",
+  "0.5.0": "a release or version marker",
+  "triaged": "process or automation state",
+  "review-sla-escalated": "process or automation state",
+  "needs-triage": "process or automation state",
+  "validating": "process or automation state",
+  "nightly-failure": "process or automation state",
+  "error-analysis-agent-created": "process or automation state",
+  "stale": "process or automation state",
+  "needs-demo": "process or automation state",
+  "waiting-on-author": "process or automation state",
+  "validated:reproduced": "process or automation state",
+  "validated:already_fixed": "process or automation state",
+  "validated:likely_repro": "process or automation state",
+  "validated:needs_manual_review": "process or automation state",
+  "validated:not_reproduced": "process or automation state",
+  "validated:needs_more_info": "process or automation state"
+ },
+ "reading": null
+}
