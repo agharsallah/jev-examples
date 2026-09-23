@@ -39,7 +39,7 @@ def _jev_blocked() -> str | None:
 
 
 def _jev_plays(*args, **kwargs):
-    from .duel import play_piece
+    from .jev import play_piece
 
     return play_piece(*args, **kwargs)
 

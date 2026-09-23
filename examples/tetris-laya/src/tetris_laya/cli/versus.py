@@ -40,7 +40,7 @@ def versus(
     import random
 
     from rich.columns import Columns
-    from tetris_duel.duel import play_piece as jev_plays
+    from tetris_duel.jev import play_piece as jev_plays
 
     check([difficulty])
     need_jev()

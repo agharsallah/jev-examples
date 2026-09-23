@@ -158,8 +158,12 @@ def decide(
     model: str = "",
     usage: dict | None = None,
     slot: int | None = None,
+    who: str = "Jev",
 ) -> Decision:
-    """Turn five typed answers into one move."""
+    """Turn five typed answers into one move.
+
+    `who` is the player whose answers these are, so an overrule names it.
+    """
     landing_answer = answers["landing"]
     probabilities = dict(landing_answer.probabilities)
     picked = landing_answer.choice
@@ -206,7 +210,7 @@ def decide(
         decision.landing = landing
         decision.spot = best
         decision.overruled = True
-        decision.note = _why(menu[picked], landing, danger, clear_now, guarding)
+        decision.note = _why(menu[picked], landing, danger, clear_now, guarding, who)
     return decision
 
 
@@ -216,20 +220,22 @@ def _why(
     danger: float,
     clear_now: float,
     slot: int | None = None,
+    who: str = "Jev",
 ) -> str:
     """Name the rule that moved the piece, so the overrule is never a mystery."""
     if slot is not None and any(x == slot for x, _ in rejected.cells):
         return (
-            f"house rules: Jev's pick would have filled column {slot + 1}, "
+            f"house rules: {who}'s pick would have filled column {slot + 1}, "
             "the slot it says is being kept open for a four-row clear"
         )
     if taken.rows_cleared > rejected.rows_cleared and clear_now > 0.5:
         rows = "row" if taken.rows_cleared == 1 else "rows"
-        return f"house rules: Jev wants a clear now, and this one takes {taken.rows_cleared} {rows}"
+        takes = f"{taken.rows_cleared} {rows}"
+        return f"house rules: {who} wants a clear now, and this one takes {takes}"
     if taken.new_gaps < rejected.new_gaps:
         sealed = rejected.new_gaps - taken.new_gaps
         cells = "cell" if sealed == 1 else "cells"
-        return f"house rules: Jev's pick would have sealed {sealed} more {cells} under the piece"
+        return f"house rules: {who}'s pick would have sealed {sealed} more {cells} under the piece"
     if taken.tallest_after < rejected.tallest_after:
         return (
             f"house rules: danger at {danger:.1f}/4, and this keeps the stack "

@@ -12,7 +12,8 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 
 from .board import read_grid, settle
-from .duel import GameOver, play_piece
+from .duel import GameOver
+from .jev import play_piece
 from .payload import as_payload
 
 
