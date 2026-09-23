@@ -9,37 +9,30 @@ downloaded.
 ## Setup
 
 Laya pulls in `torch` and `transformers`, so this example is a workspace member but not part
-of the root `uv sync`. Ask for it by name:
+of the root `uv sync`. Sync everything, and the tetris duel's own commands pick Laya up:
 
 ```bash
-uv sync --package tetris-laya
-uv run --package tetris-laya laya-duel serve                # the arcade, Laya vs you, on :8001
-uv run --package tetris-laya laya-duel watch -d grandmaster  # laya alone, in the terminal
+uv sync --all-packages
+uv run duel serve --left laya              # the arcade, Laya vs you
+uv run duel watch -P laya -d grandmaster   # Laya alone, in the terminal
+uv run duel versus --left jev --right laya # Jev and Laya on the same pieces
 ```
 
 The first run downloads the checkpoint (about 1.3 GB) into the Hugging Face cache. It runs
 on CUDA, Apple's MPS or the CPU, whichever it finds; `LAYA_DEVICE=cpu` forces one.
-`--model` (or `LAYA_MODEL`) takes any other Laya checkpoint, a repo id or a local path, such
-as one you fine-tuned.
+`LAYA_MODEL` (or `--model` on `watch` and `bench`) takes any other Laya checkpoint, a repo id
+or a local path, such as one you fine-tuned.
 
-| Command | What it does |
-| --- | --- |
-| `laya-duel serve` | The `duel serve` arcade, opened on Laya vs you; the page switches to any matchup |
-| `laya-duel serve --versus` | The same arcade, opened on Laya vs Jev |
-| `laya-duel versus` | The same match in the terminal, both wells side by side. `--pieces`, `--seed`, `--difficulty`, `--model`, `--jev-model` |
-| `laya-duel watch` | Laya plays alone in the terminal. `--pieces`, `--seed`, `--difficulty`, `--model` |
-| `laya-duel bench` | Same seeds as `duel bench`, so the two tables are the same games |
-| `laya-duel levels` | What each difficulty changes for Laya |
-
-### One arcade, any matchup
+### No command line of its own
 
 This package registers Laya as a player of the tetris duel (the `tetris_duel.players` entry
-point), so there is only one arcade: `duel serve` and `laya-duel serve` are the same app, and
-the seat pickers at the top choose Laya, Jev or you for each well.
+point), so every `duel` command takes it: `watch -P laya`, `bench -P laya`, `versus --left
+jev --right laya`, `levels -P laya`, and the arcade, whose seat pickers choose Laya, Jev or you
+for each well.
 
 ### Laya vs Jev
 
-Both versus modes put Jev in the other well, so they need the `TYPESAFE_API_KEY` from the
+Any match with Jev in the other well, so they need the `TYPESAFE_API_KEY` from the
 [root setup](../../README.md) in your `.env`; Laya still runs locally. Both players get the
 same seeded pieces, the same gravity and the same difficulty, run the same board code and
 the same house rules, and each has its own card of what it said about its last piece. The
@@ -48,12 +41,13 @@ Every Jev piece is one API request, as it is in `duel`.
 
 ## What is reused, and what is not
 
-Everything that is not the asking comes from `tetris-duel`, imported rather than copied:
-`board` for the geometry and every finding it phrases, `pilot.py` for the house rules and
-the slot guard, `selfplay.py` and `payload.py` for whole matches and what the scoreboard
-draws, `render.py` for the terminal, and the whole arcade. The Jev harness takes the player as
-a parameter — `self_play(play=...)`, and a `Player` registered for the arcade — and this
-package supplies a `play_piece` with the same signature:
+Everything that is not the asking is `tetris-duel`'s, and Jev and Laya run through the same
+code for it. `duel.play` takes one piece start to finish for any player: it reads the well,
+numbers the menu, picks the slot to defend, times the answer, and hands it to the house rules
+in `pilot.py`. The one thing a player supplies is an `Asker` — a name, a difficulty ladder,
+and `ask(turn) -> Reply` — and Jev's is `tetris_duel/jev.py`. Laya's is `play.py` here. The
+board, self-play, the payload, the terminal views, the command line and the arcade all come
+with it:
 
 ```
 src/tetris_laya/
@@ -61,9 +55,8 @@ src/tetris_laya/
   levels.py      Laya's difficulty ladder: same keys and gravity as Jev's
   phrasing.py    the state, most important first, and each landing in one line
   questions.py   the docket, cut down to Laya's budget, and the heats
-  play.py        heats, the final, and Laya's answers read back into the pilot's shape
+  play.py        Laya's Asker: heats, the final, answers read back into the pilot's shape
   player.py      Laya's seat in the arcade, registered as an entry point
-  cli/           the commands: solo.py (watch, bench, levels), serve.py, versus.py
 ```
 
 ## Fitting the question to the model
@@ -99,7 +92,7 @@ Badly, for now, and the bench says exactly how badly. The same seeds as the Jev 
 [tetris-duel](../tetris-duel#does-any-of-it-actually-score-more), on an M1 Pro over MPS:
 
 ```
-$ laya-duel bench -n 50 -g 2 --seed 41
+$ duel bench -P laya -n 50 -g 2 --seed 41
 
 ┏━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━┳━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ difficulty  ┃ points ┃ rows ┃ clears  ┃ survived ┃ tokens/piece ┃ sec/piece ┃

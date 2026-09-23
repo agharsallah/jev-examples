@@ -34,5 +34,5 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
-"src/tetris_duel/cli.py" = ["E501"]
+"src/tetris_duel/cli/*.py" = ["E501"]
 "src/tetris_duel/payload.py" = ["E501"]

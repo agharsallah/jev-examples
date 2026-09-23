@@ -96,14 +96,22 @@ key — is shown greyed out with the reason.
 
 On Vercel only Jev is installed, so the picker there is Jev against you.
 
+Every player runs through the same harness. `duel.play` takes one piece start to finish —
+read the well, number the menu, pick the slot to defend, ask, and hand the answers to the house
+rules in `pilot.py` — and the only thing a player brings is an `Asker`: its name, its
+difficulty ladder, and how it is asked (`ask(turn) -> Reply`). Jev's is `jev.py`. The same
+answers give the same move whoever gave them, and the terminal commands take any installed
+player too: `duel watch -P laya`, `duel versus --left jev --right laya`.
+
 ## Commands
 
 | Command | What it does |
 | --- | --- |
 | `duel serve` | Opens the arcade: pick who plays each well on the page — Jev, you, or any other installed player — with every number behind each move underneath. `--left`, `--right` set the starting matchup |
-| `duel watch` | Jev plays alone in the terminal. `--pieces`, `--seed`, `--difficulty`, `--model` |
-| `duel bench` | Plays the same seeded pieces at every difficulty and prints what each scored. `--pieces`, `--games`, `--seed`, repeatable `--difficulty` |
-| `duel levels` | What each difficulty actually changes |
+| `duel watch` | A player alone in the terminal, Jev by default. `--player`, `--pieces`, `--seed`, `--difficulty`, `--model` |
+| `duel bench` | Plays the same seeded pieces at every difficulty and prints what each scored. `--player`, `--pieces`, `--games`, `--seed`, repeatable `--difficulty` |
+| `duel versus` | Two players on the same pieces, side by side. `--left`, `--right`, `--pieces`, `--seed`, `--difficulty` |
+| `duel levels` | What each difficulty actually changes, for every installed player |
 
 Every piece is one request, so `duel bench -n 50 -g 2` across four difficulties is 400 of
 them — cheap in money, several minutes in wall clock.
@@ -302,13 +310,14 @@ src/tetris_duel/
   questions.py     the docket, and the words the ground and each landing are described in
   engine.py        the only module that calls the API
   pilot.py         difficulty, and the house rules over Jev's answers
-  duel.py          one piece, start to finish
+  duel.py          one piece, start to finish, for any player's Asker
+  jev.py           Jev's Asker: the whole docket in one request
   payload.py       a move in the shape the scoreboard draws it
   selfplay.py      whole matches for `watch` and `bench`, scored like the arcade
   players.py       who can sit at a well: Jev, plus any package registered as a player
   web.py           FastAPI: the setup, and POST a well to get that player's move
   render.py        terminal theatre, via rich
-  cli.py           typer commands
+  cli/             typer commands: solo (watch, bench, levels), versus, serve
   static/          the arcade: index.html, css/ by part of the page, js/ built from web/
 web/src/           the arcade's TypeScript (build with `pnpm build` at the repo root)
   main.ts          boot: fetch the setup, seat the players, start the frame loop

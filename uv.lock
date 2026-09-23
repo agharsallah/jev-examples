@@ -1158,12 +1158,8 @@ name = "tetris-laya"
 version = "0.1.0"
 source = { editable = "examples/tetris-laya" }
 dependencies = [
-    { name = "fastapi" },
     { name = "laya" },
-    { name = "rich" },
     { name = "tetris-duel" },
-    { name = "typer" },
-    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -1173,12 +1169,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi", specifier = ">=0.115" },
     { name = "laya", specifier = ">=0.3.7" },
-    { name = "rich", specifier = ">=13.9" },
     { name = "tetris-duel", editable = "examples/tetris-duel" },
-    { name = "typer", specifier = ">=0.15" },
-    { name = "uvicorn", specifier = ">=0.30" },
 ]
 
 [package.metadata.requires-dev]

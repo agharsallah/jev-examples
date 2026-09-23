@@ -18,7 +18,7 @@ def clock(seconds: float) -> str:
     return f"{int(seconds) // 60}:{int(seconds) % 60:02d}"
 
 
-def banner(who: str = "Jev", tagline: str = "a self-playing well · one API call per piece") -> None:
+def banner(who: str = "Jev", tagline: str = "a self-playing well · one move per piece") -> None:
     console.print(
         Text.from_markup(
             "\n[bold magenta]  ██[/bold magenta]\n"
