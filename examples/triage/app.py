@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 os.environ.setdefault("TRIAGE_HOME", "/tmp/triage")
+os.environ.setdefault("TRIAGE_SNAPSHOTS", "/tmp/triage/overview")
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from triage.web import app  # noqa: E402

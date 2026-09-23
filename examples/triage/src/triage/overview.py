@@ -16,20 +16,27 @@ formed in the browser from the pairwise answers, so their threshold is a knob.
 from __future__ import annotations
 
 import json
+import os
 import time
 from collections import Counter
 from datetime import UTC, datetime
+from pathlib import Path
 
 from . import github
-from .jev import HOME, TriageError
+from .jev import TriageError
 from .policy import LANES
 from .questions import NONE_FIT
 from .scan import _measure
 from .triage import CORPUS, read_repo, verdict
 
 # The last overview of each repo, so opening the page shows it again without
-# asking GitHub or Jev anything. Only a refresh replaces it.
-SNAPSHOTS = HOME / "overview"
+# asking GitHub or Jev anything. Only a refresh replaces it. They live in the
+# example's own folder (examples/triage/.triage/overview, ignored by git), not
+# the user's home; TRIAGE_SNAPSHOTS moves them, e.g. to /tmp when hosted.
+EXAMPLE_ROOT = Path(__file__).resolve().parents[2]
+SNAPSHOTS = Path(
+    os.environ.get("TRIAGE_SNAPSHOTS", EXAMPLE_ROOT / ".triage" / "overview")
+)
 
 # The most a single overview will read. A repo with more open issues gets the
 # newest this many; the page says so.

@@ -131,7 +131,8 @@ once, laid out for the person planning the week rather than the person triaging 
 - **Every issue** — a sortable table with the scores and flags; any row, dot or list item
   opens the full triage, and *back to the overview* keeps the filters.
 
-The last overview of each repo is saved, and opening the page shows it straight away — the
+The last overview of each repo is saved in `examples/triage/.triage/overview/` (ignored by
+git; `TRIAGE_SNAPSHOTS` moves it), and opening the page shows it straight away — the
 page reads that file and asks neither GitHub nor Jev anything until you press **Refresh from
 GitHub**. Every filter narrows every view at once, and the three knobs — the readiness bar, the
 beginner bar, the duplicate threshold — recompute everything in the browser. The page prints
