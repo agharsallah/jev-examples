@@ -1,0 +1,38 @@
+/* A desk after hours: ink-dark surfaces, one sheet of warm paper, and a single
+   amber lamp. The only bright things on the page are the draft itself and the
+   numbers Jev returned. */
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font: 400 15.5px/1.6 Inter, system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 500px at 78% -8%, rgba(240, 163, 94, .13), transparent 62%),
+    var(--ink);
+  min-height: 100vh;
+}
+
+a { color: var(--lamp); text-decoration-thickness: 1px; text-underline-offset: .2em; }
+
+:focus-visible { outline: 2px solid var(--lamp); outline-offset: 3px; border-radius: 4px; }
+
+code {
+  font: 600 .85em/1 "JetBrains Mono", ui-monospace, monospace;
+  color: var(--lamp);
+}
+
+.desk {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3.5rem) 1rem 4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

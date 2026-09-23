@@ -1,0 +1,84 @@
+/* The lower half of the result card: findings, the marked-up draft and its
+   legend, and the cost line. */
+
+/* ---------------------------------------------------------- findings */
+
+.findings { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+
+.findings li {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr) auto;
+  gap: .6rem;
+  padding: .7rem .8rem;
+  border-radius: 10px;
+  background: var(--ink-3);
+  border-left: 3px solid var(--line);
+}
+
+.findings .glyph { font: 600 .9rem/1.4 "JetBrains Mono", monospace; text-align: center; }
+.findings .title { font-weight: 500; }
+.findings .fix { display: block; margin-top: .2rem; font-size: .82rem; color: var(--muted); }
+.findings .strength { font: 600 .78rem/1.5 "JetBrains Mono", monospace; color: var(--faint); }
+
+.f-blocker { border-left-color: var(--bad); }
+.f-blocker .glyph, .f-blocker .title { color: var(--bad); }
+.f-major { border-left-color: var(--warn); }
+.f-major .glyph, .f-major .title { color: var(--warn); }
+.f-minor { border-left-color: var(--faint); }
+.f-good { border-left-color: var(--good); }
+.f-good .glyph, .f-good .title { color: var(--good); }
+
+/* ---------------------------------------------------------- markup */
+
+.marked {
+  font: 400 15px/1.95 Inter, sans-serif;
+  white-space: pre-wrap;
+}
+
+.marked mark {
+  background: none;
+  color: inherit;
+  border-radius: 3px;
+  padding: .06em .12em;
+  cursor: help;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.m-sensitive { background: rgba(232, 100, 108, .85) !important; color: #fff !important; font-weight: 500; }
+.m-barbed { background: rgba(232, 100, 108, .26) !important; box-shadow: inset 0 -2px 0 var(--bad); }
+.m-ambiguous { background: rgba(180, 138, 224, .22) !important; box-shadow: inset 0 -2px 0 var(--violet); }
+.m-hedged { background: rgba(232, 193, 92, .24) !important; box-shadow: inset 0 -2px 0 #b8912f; }
+.m-carries_the_ask { background: rgba(111, 168, 220, .26) !important; box-shadow: inset 0 -2px 0 #3b7fb8; font-weight: 500; }
+.m-cuttable { opacity: .45; text-decoration: line-through; text-decoration-color: rgba(30, 27, 22, .5); }
+
+.legend { display: flex; flex-wrap: wrap; gap: .5rem .9rem; margin-top: .8rem; }
+
+.legend span {
+  display: inline-flex;
+  gap: .4rem;
+  align-items: center;
+  font-size: .78rem;
+  color: var(--muted);
+}
+
+.legend i {
+  width: .9rem;
+  height: .55rem;
+  border-radius: 2px;
+  display: inline-block;
+  opacity: 1;
+  text-decoration: none;
+}
+
+/* The strike-through that marks a cuttable sentence has nothing to show in a
+   swatch, so the legend gives it a solid one. */
+.legend i.m-cuttable { background: rgba(230, 233, 240, .3) !important; }
+
+.cost {
+  margin: 1.5rem 0 0;
+  padding-top: .9rem;
+  border-top: 1px solid var(--line);
+  font: 400 .78rem/1.6 "JetBrains Mono", monospace;
+  color: var(--faint);
+}

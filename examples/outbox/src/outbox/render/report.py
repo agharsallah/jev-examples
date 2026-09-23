@@ -1,6 +1,5 @@
-"""The desk, in a terminal.
+"""The full report for one draft, top to bottom.
 
-Nothing here decides anything; it only draws what review.py already worked out.
 The one interesting piece is `rail_bar`, which shows the band the audience
 wants alongside where the draft actually landed -- the gap between those two is
 the whole verdict.
@@ -8,52 +7,13 @@ the whole verdict.
 
 from __future__ import annotations
 
-from rich.console import Console, Group
+from rich.console import Group
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .review import HOLD, PROBE_LABELS, PROBE_THRESHOLDS, REWRITE, SEND, TIGHTEN, UNCLEAR, Review
-from .reviewer import Stability
-
-console = Console()
-
-WIDTH = 26
-
-VERDICT_STYLE = {
-    SEND: "bold black on green",
-    TIGHTEN: "bold black on yellow",
-    REWRITE: "bold white on dark_orange3",
-    HOLD: "bold white on red",
-    UNCLEAR: "bold black on grey70",
-}
-
-SEVERITY_STYLE = {
-    "blocker": ("!!", "bold red"),
-    "major": ("!", "yellow"),
-    "minor": ("·", "grey70"),
-    "good": ("✓", "green"),
-}
-
-PROBE_STYLE = {
-    "carries_the_ask": "bold underline cyan",
-    "barbed": "bold red",
-    "hedged": "yellow",
-    "ambiguous": "magenta",
-    "sensitive": "bold white on red",
-    "cuttable": "dim strike",
-}
-
-# The order highlights are applied in, so the worst one wins a sentence.
-PROBE_ORDER = ["sensitive", "barbed", "ambiguous", "hedged", "carries_the_ask", "cuttable"]
-
-
-def banner() -> None:
-    console.print(
-        Text.from_markup(
-            "\n[bold]OUTBOX[/bold] [dim]· a second opinion before you hit send[/dim]\n"
-        )
-    )
+from ..review import PROBE_LABELS, PROBE_ORDER, PROBE_THRESHOLDS, Review, top_probe
+from .styles import PROBE_STYLE, SEVERITY_STYLE, VERDICT_STYLE, WIDTH, console
 
 
 def rail_bar(score: float, low: float, high: float, counted: bool) -> Text:
@@ -111,11 +71,9 @@ def marked_draft(review: Review) -> Text:
     """The draft with each flagged sentence painted where Jev flagged it."""
     text = Text(review.draft, style="white")
     for sentence in review.sentences:
-        flags = sentence.flagged(PROBE_THRESHOLDS)
-        for probe in PROBE_ORDER:
-            if probe in flags:
-                text.stylize(PROBE_STYLE[probe], sentence.start, sentence.end)
-                break
+        probe = top_probe(sentence)
+        if probe is not None:
+            text.stylize(PROBE_STYLE[probe], sentence.start, sentence.end)
     return text
 
 
@@ -181,86 +139,3 @@ def report(review: Review) -> None:
             style="dim",
         )
     )
-
-
-def stability_report(stability: Stability) -> None:
-    """What happened when the same draft was read several times over."""
-    table = Table.grid(padding=(0, 2))
-    table.add_column(style="bold")
-    table.add_column()
-    for verdict, count in sorted(stability.verdicts.items(), key=lambda kv: -kv[1]):
-        bar = "█" * count
-        table.add_row(verdict, Text(f"{bar} {count}/{stability.runs}", style="cyan"))
-
-    wobble = Table.grid(padding=(0, 2))
-    wobble.add_column(style="dim")
-    wobble.add_column(justify="right", style="dim")
-    for name, spread in stability.wobbliest:
-        wobble.add_row(name.replace("_", " "), f"±{spread:.02f}")
-
-    settled = (
-        Text("The desk says the same thing every time.", style="green")
-        if stability.settled
-        else Text("This draft sits on a line. Treat the verdict as a suggestion.", style="yellow")
-    )
-    console.print(
-        Panel(
-            Group(
-                Text(f"{stability.runs} independent reads", style="bold"),
-                Text(),
-                table,
-                Text(),
-                Text(
-                    f"send score {min(stability.send_scores)}-{max(stability.send_scores)}"
-                    f"  (spread {stability.spread})",
-                    style="dim",
-                ),
-                Text(),
-                Text("least settled answers", style="dim"),
-                wobble,
-                Text(),
-                settled,
-            ),
-            title="consistency",
-            border_style="grey35",
-            padding=(1, 2),
-        )
-    )
-
-
-def batch_report(reviews: list[Review]) -> None:
-    """Two lines per draft, so a pile of them still reads at any width."""
-    for review in reviews:
-        line = Text("  ")
-        line.append(f" {review.verdict} ", style=VERDICT_STYLE[review.verdict])
-        line.append(f"  {review.send_score:>3}/100", style="bold")
-        line.append(f"  {review.intent}", style="cyan")
-        line.append(f" · {review.risk.replace('_', ' ')}", style="magenta")
-        line.append(f" · for {review.audience.label}", style="dim")
-        console.print(line)
-        snippet = review.draft.replace("\n", " ")
-        room = max(40, console.width - 6)
-        if len(snippet) > room:
-            snippet = snippet[: room - 1] + "\u2026"
-        console.print(Text(f"    {snippet}", style="dim"))
-        console.print()
-
-    console.print(
-        Text(
-            f" {len(reviews)} drafts · {sum(r.questions_asked for r in reviews)} questions"
-            f" · {len(reviews)} concurrent requests · "
-            f"{sum(r.input_tokens for r in reviews)} in / "
-            f"{sum(r.output_tokens for r in reviews)} out",
-            style="dim",
-        )
-    )
-
-
-def models_report(models: list[tuple[str, str, str]]) -> None:
-    table = Table(box=None, pad_edge=False)
-    table.add_column("model", style="bold")
-    table.add_column("released", style="dim")
-    table.add_column("description")
-    for name, released, description in models:
-        table.add_row(name, released[:10], description)
-    console.print(table)

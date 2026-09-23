@@ -1,0 +1,5 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "../src/outbox/static/js", "tsBuildInfoFile": ".tsbuildinfo" },
+  "include": ["src"]
+}

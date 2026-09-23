@@ -1,0 +1,121 @@
+/* The top of the result card: the stamp, the dial, the chips, and the reader
+   switch that re-scores without a model call. */
+
+.verdict-head {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.stamp { min-width: 12rem; flex: 1 1 14rem; }
+
+.stamp-word {
+  display: inline-block;
+  font: 400 clamp(2rem, 5vw, 3rem)/1 "Instrument Serif", Georgia, serif;
+  letter-spacing: -.01em;
+  padding: .1em .3em .18em;
+  border-radius: 10px;
+  border: 2px solid currentColor;
+}
+
+.stamp-blurb {
+  display: block;
+  margin-top: .7rem;
+  color: var(--muted);
+  font-size: .9rem;
+  font-style: italic;
+  max-width: 28rem;
+}
+
+.v-send { color: var(--good); }
+.v-tighten { color: var(--warn); }
+.v-rewrite { color: var(--lamp); }
+.v-hold { color: var(--bad); }
+.v-unclear { color: var(--muted); }
+
+.dial { position: relative; width: 7.5rem; height: 7.5rem; flex: none; }
+.dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+.dial-track { fill: none; stroke: var(--ink-3); stroke-width: 9; }
+
+.dial-value {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 327;
+  stroke-dashoffset: 327;
+  transition: stroke-dashoffset .7s cubic-bezier(.22, 1, .36, 1);
+}
+
+.dial-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.dial-text strong { font: 600 1.7rem/1 "JetBrains Mono", monospace; }
+.dial-text span { font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.1rem; }
+
+.chip {
+  padding: .35rem .7rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--ink-3);
+  font-size: .8rem;
+  color: var(--cool);
+}
+
+.chip b { font-family: "JetBrains Mono", monospace; font-weight: 600; }
+.chip span { color: var(--faint); }
+.chip.risk { color: var(--violet); }
+
+/* ---------------------------------------------------------- reader switch */
+
+.switcher {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+  background: rgba(255, 255, 255, .015);
+}
+
+.switcher-head { margin: 0 0 .7rem; }
+
+.pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+.pill {
+  padding: .45rem .85rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: 500 .85rem/1 Inter, sans-serif;
+}
+
+.pill:hover { border-color: var(--faint); color: var(--text); }
+
+.pill[aria-pressed="true"] {
+  background: var(--lamp);
+  border-color: var(--lamp);
+  color: #21150a;
+}
+
+.wants { margin: .7rem 0 0; font-size: .82rem; color: var(--faint); font-style: italic; }
+
+#rescoreNote { color: var(--good); }
+#rescoreNote.flash { animation: flash 1.6s ease; }
+
+@keyframes flash {
+  0% { opacity: 0; transform: translateY(-3px); }
+  12% { opacity: 1; transform: none; }
+  70% { opacity: 1; }
+  100% { opacity: .45; }
+}

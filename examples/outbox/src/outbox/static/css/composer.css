@@ -1,0 +1,85 @@
+/* The left-hand form: the sheet of paper, the fields under it, the buttons. */
+
+.paper {
+  background: linear-gradient(180deg, var(--paper), var(--paper-2));
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  color: var(--paper-ink);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12), 0 8px 18px rgba(0, 0, 0, .3);
+}
+
+.paper textarea {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  resize: vertical;
+  background: none;
+  color: inherit;
+  font: 400 15px/1.75 Inter, sans-serif;
+}
+
+.paper textarea::placeholder { color: #9b9284; }
+.paper textarea:focus { outline: none; }
+
+.meta { display: grid; gap: .6rem; margin-top: 1rem; }
+
+.meta label { display: grid; gap: .25rem; }
+
+.field {
+  font: 600 .68rem/1 Inter, sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.meta input, .meta select {
+  width: 100%;
+  padding: .55rem .7rem;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--ink-3);
+  color: var(--text);
+  font: 400 .9rem/1.3 Inter, sans-serif;
+}
+
+.meta input::placeholder { color: var(--faint); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  align-items: center;
+  margin-top: 1.1rem;
+}
+
+button {
+  font: 600 .9rem/1 Inter, sans-serif;
+  padding: .7rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .12s ease, filter .12s ease;
+}
+
+button:active { transform: translateY(1px); }
+
+.primary { background: var(--lamp); color: #21150a; }
+.primary:hover { filter: brightness(1.08); }
+.primary[disabled] { opacity: .5; cursor: progress; }
+
+.ghost { background: transparent; border-color: var(--line); color: var(--text); }
+.ghost:hover { border-color: var(--faint); }
+
+.toggle {
+  display: flex;
+  gap: .45rem;
+  align-items: center;
+  font-size: .8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.toggle em { color: var(--faint); font-style: normal; }
+.toggle input { accent-color: var(--lamp); }
+
+.hint { margin: .75rem 0 0; font-size: .76rem; color: var(--faint); }

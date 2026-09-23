@@ -1,0 +1,80 @@
+/* "How it lands": one track per dimension, the band behind the dot. */
+
+.swatch {
+  display: inline-block;
+  width: .8rem;
+  height: .45rem;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.swatch.band { background: rgba(111, 168, 220, .38); }
+.swatch.dot { width: .45rem; height: .45rem; border-radius: 50%; background: var(--text); }
+
+.rails { display: grid; gap: .55rem; }
+
+.rail {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 2.6rem;
+  gap: .75rem;
+  align-items: center;
+}
+
+.rail-name { font-size: .82rem; color: var(--muted); text-align: right; }
+
+.track {
+  position: relative;
+  height: 1.45rem;
+  border-radius: 7px;
+  background: var(--ink-3);
+  overflow: hidden;
+}
+
+.track::after {
+  /* the midpoint of the 0-4 scale, as a faint tick */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, .06);
+}
+
+.band-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(111, 168, 220, .22);
+  border-left: 1px solid rgba(111, 168, 220, .5);
+  border-right: 1px solid rgba(111, 168, 220, .5);
+  transition: left .5s cubic-bezier(.22, 1, .36, 1), width .5s cubic-bezier(.22, 1, .36, 1);
+}
+
+.marker {
+  position: absolute;
+  top: 50%;
+  width: .62rem;
+  height: .62rem;
+  margin: -.31rem 0 0 -.31rem;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 3px var(--ink-2);
+  transition: left .5s cubic-bezier(.22, 1, .36, 1);
+}
+
+.rail.off .marker { background: var(--warn); }
+.rail.unsure .marker { background: var(--faint); box-shadow: 0 0 0 3px var(--ink-2); }
+.rail.unsure .band-zone { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .12); }
+
+.rail-score { font: 600 .82rem/1 "JetBrains Mono", monospace; color: var(--text); }
+.rail.unsure .rail-score { color: var(--faint); }
+
+.rail-note {
+  grid-column: 2 / 4;
+  margin: -.25rem 0 .2rem;
+  font-size: .75rem;
+  color: var(--faint);
+}
+
+.rail-note b { color: var(--warn); font-weight: 500; }

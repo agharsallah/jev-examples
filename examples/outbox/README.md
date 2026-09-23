@@ -154,17 +154,52 @@ and that was always a code decision.
 
 ```
 src/outbox/
-  questions.py   every question Jev is asked, both passes
+  questions/     every question Jev is asked, both passes
+    choices.py     what the draft is for, and what could go wrong
+    dimensions.py  the six Score scales
+    checks.py      the yes/no checklist, plus the speculative questions
+    read.py        pass one, assembled into one docket and one state
+    probes.py      pass two: the per-sentence questions
   desk.py        the only module that calls the API (sync, async, errors)
   reviewer.py    orchestration: pass one, pass two, batches, consistency runs
-  review.py      pure logic over the answers: findings, scoring, verdict
+  review/        pure logic over the answers: findings, scoring, verdict
+    model.py       the verdicts, and the Finding / Rail / Review dataclasses
+    rules.py       the tables: which answer becomes which finding
+    findings.py    applying those tables to one response
+    scoring.py     rails, fit, send score, verdict
+    verdict.py     assess() and rescore()
+    probes.py      which sentence probes to ask, and folding the answers back
   audience.py    what each reader wants, as bands and weights
   sentences.py   splitting a draft while keeping character offsets
-  render.py      the terminal report, via rich
-  web.py         FastAPI: /api/read calls Jev, /api/rescore does not
+  render/        the terminal report, via rich
+    styles.py      the shared console, colours and glyphs
+    report.py      the full verdict for one draft
+    summaries.py   consistency runs, a batch, the model list
+  web/           FastAPI: /api/read calls Jev, /api/rescore does not
+    schemas.py     request bodies
+    payload.py     the JSON the browser draws, and the way back to a Review
+    app.py         the routes and the static files
   cli.py         typer commands
   samples.py     drafts to try it on
+  static/
+    index.html     the page
+    css/           tokens, base, layout, then one sheet per area of the page
+    js/            compiled from web/src -- committed, so no Node is needed to run it
+
+web/src/         the browser UI, in TypeScript
+  api.ts           typed calls to the three endpoints, mirroring web/payload.py
+  dom.ts           element lookup, show/hide, escaping
+  elements.ts      every element the script touches, looked up once
+  format.ts        pure formatting: percentages, labels, the cost line
+  ui/              one module per area: composer, verdict, pills, rails,
+                   findings, markup, and result (which draws them in order)
+  main.ts          the state, and the wiring between events and the modules
 ```
+
+The UI source is TypeScript in `web/src`. After changing it, run `pnpm build`
+from the repo root (or `pnpm exec tsc -b examples/outbox/web` for this example
+alone) to regenerate `src/outbox/static/js`; the compiled output is committed,
+so `uv run outbox serve` works without Node installed.
 
 ## Is any of this stable?
 

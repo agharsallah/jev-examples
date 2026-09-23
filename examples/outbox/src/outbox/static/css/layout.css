@@ -1,0 +1,99 @@
+/* Where things sit: the masthead, the two-column grid, the card shell, the
+   footer. */
+
+/* ---------------------------------------------------------- masthead */
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 3rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.wordmark { display: flex; gap: 1rem; align-items: center; }
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  font-size: 1.4rem;
+  border-radius: 12px;
+  background: linear-gradient(160deg, var(--lamp), #c9763a);
+  color: #21150a;
+  box-shadow: 0 6px 20px rgba(240, 163, 94, .28);
+}
+
+.masthead h1 {
+  margin: 0;
+  font: 400 2.6rem/1 "Instrument Serif", Georgia, serif;
+  letter-spacing: -.01em;
+}
+
+.masthead p { margin: .15rem 0 0; color: var(--muted); font-size: .95rem; }
+
+.credo {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--faint);
+  font-size: .87rem;
+  line-height: 1.65;
+}
+
+/* ---------------------------------------------------------- layout */
+
+main {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 64rem) {
+  main { grid-template-columns: minmax(0, 27rem) minmax(0, 1fr); }
+  .compose { position: sticky; top: 1.5rem; }
+  .thinking, .error { grid-column: 2; }
+}
+
+.card {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.card-head, .rails-head, .switcher-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.5rem 0 .6rem;
+}
+
+.compose .card-head:first-child, .card > .card-head:first-child { margin-top: 0; }
+
+.card-title {
+  font: 600 .72rem/1 Inter, sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card-note { font-size: .76rem; color: var(--faint); }
+.card-note b { color: var(--text); font-family: "JetBrains Mono", monospace; }
+
+footer {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--faint);
+  font-size: .8rem;
+}
+
+footer p { margin: 0; max-width: 52rem; }

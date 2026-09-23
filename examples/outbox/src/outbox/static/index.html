@@ -7,7 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/desk.css">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/base.css">
+<link rel="stylesheet" href="/static/css/layout.css">
+<link rel="stylesheet" href="/static/css/composer.css">
+<link rel="stylesheet" href="/static/css/verdict.css">
+<link rel="stylesheet" href="/static/css/rails.css">
+<link rel="stylesheet" href="/static/css/findings.css">
+<link rel="stylesheet" href="/static/css/states.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%9C%89%EF%B8%8F</text></svg>">
 </head>
 <body>
@@ -143,12 +150,12 @@
   <footer>
     <p>
       Built on <a href="https://docs.typesafe.ai">TypeSafe</a>'s System One models.
-      The questions live in <code>questions.py</code>, the judgement in <code>review.py</code>,
+      The questions live in <code>questions/</code>, the judgement in <code>review/</code>,
       and the bands each reader is scored against in <code>audience.py</code>.
     </p>
   </footer>
 </div>
 
-<script src="/static/desk.js"></script>
+<script type="module" src="/static/js/main.js"></script>
 </body>
 </html>

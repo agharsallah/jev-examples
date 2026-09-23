@@ -1,0 +1,26 @@
+/* Colour, radius and shadow: the only values the other sheets are allowed to
+   invent from. */
+
+:root {
+  --ink: #0c0f16;
+  --ink-2: #131823;
+  --ink-3: #1b2231;
+  --line: #2a3346;
+  --text: #e6e9f0;
+  --muted: #8b95ab;
+  --faint: #5d6880;
+
+  --paper: #f3ede1;
+  --paper-2: #e8e0cf;
+  --paper-ink: #1e1b16;
+
+  --lamp: #f0a35e;
+  --good: #63c08a;
+  --warn: #e8c15c;
+  --bad: #e8646c;
+  --cool: #6fa8dc;
+  --violet: #b48ae0;
+
+  --radius: 14px;
+  --shadow: 0 18px 40px rgba(0, 0, 0, .45);
+}
