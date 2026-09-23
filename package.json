@@ -4,9 +4,9 @@
   "description": "TypeScript for the examples' browser UIs. Sources live in examples/*/web/src; `pnpm build` compiles them into each package's static/js.",
   "type": "module",
   "scripts": {
-    "build": "tsc -b examples/excuse-tribunal/web examples/outbox/web examples/tetris-duel/web",
-    "watch": "tsc -b -w examples/excuse-tribunal/web examples/outbox/web examples/tetris-duel/web",
-    "clean": "tsc -b --clean examples/excuse-tribunal/web examples/outbox/web examples/tetris-duel/web"
+    "build": "tsc -b examples/excuse-tribunal/web examples/outbox/web examples/tetris-duel/web examples/triage/web",
+    "watch": "tsc -b -w examples/excuse-tribunal/web examples/outbox/web examples/tetris-duel/web examples/triage/web",
+    "clean": "tsc -b --clean examples/excuse-tribunal/web examples/outbox/web examples/tetris-duel/web examples/triage/web"
   },
   "devDependencies": {
     "typescript": "^7.0.2"

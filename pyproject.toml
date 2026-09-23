@@ -4,6 +4,7 @@
 #   uv run tribunal judge "the dog ate my migration"
 #   uv run outbox check "just circling back on this, no rush!"
 #   uv run duel serve
+#   uv run triage serve
 #
 # Nothing is published from this file; it only ties the examples together and
 # gives them one shared virtualenv and one lockfile.
@@ -17,6 +18,7 @@ dependencies = [
     "excuse-tribunal",
     "outbox",
     "tetris-duel",
+    "triage",
 ]
 
 [tool.uv]
@@ -29,3 +31,4 @@ members = ["examples/*"]
 excuse-tribunal = { workspace = true }
 outbox = { workspace = true }
 tetris-duel = { workspace = true }
+triage = { workspace = true }
