@@ -1,22 +1,20 @@
-"""One falling piece, with Laya choosing where it goes.
+"""How Laya is asked about one piece: heats, a final, and the side questions.
 
-A drop-in for `tetris_duel.duel.play_piece`: same arguments, same return value,
-so the arcade, the terminal and the bench all run unchanged. The board, the
-legal landings and the house rules are the Jev harness's own; only the asking
-is different.
+This is Laya's `Asker` for `tetris_duel.duel.play`. The menu, the slot, the
+house rules and the timing are the shared harness, exactly as they are for
+Jev; only the asking below is Laya's own.
 """
 
 from __future__ import annotations
 
-import time
+from functools import partial
 from types import SimpleNamespace
 
 import numpy as np
 from laya import confidence_from_probs
-from tetris_duel.board import Landing, landings, read_grid, slot_column
-from tetris_duel.duel import GameOver
+from tetris_duel.duel import Reply, Turn, play
 from tetris_duel.engine import EngineError
-from tetris_duel.pilot import Decision, Difficulty, decide
+from tetris_duel.pilot import Difficulty
 from tetris_duel.questions import DANGER_LEVELS
 
 from .engine import ask, count_tokens, head_budget, model_id
@@ -25,43 +23,27 @@ from .phrasing import describe, well_state
 from .questions import DANGER_KEYS, YES, heat, heats, side_questions
 
 
-def play_piece(
-    rows: list[str],
-    piece: str,
-    next_piece: str | None = None,
-    rows_cleared: int = 0,
-    level_key: str | None = None,
-    model: str | None = None,
-    since_bar: int | None = None,
-) -> tuple[Decision, dict[str, Landing], Difficulty]:
-    """Ask Laya where this piece goes, and let the house rules have the last word."""
-    level = difficulty(level_key)
-    grid = read_grid(rows)
-    options = landings(grid, piece)
-    if not options:
-        raise GameOver(f"the {piece} piece has nowhere to land")
-    by_spot = {f"spot_{i + 1}": landing for i, landing in enumerate(options)}
-    texts = {spot: describe(landing, level.detail, next_piece) for spot, landing in by_spot.items()}
+class Laya:
+    name = "Laya"
 
-    slot = slot_column(grid) if level.well_guard else None
-    state = well_state(grid, piece, next_piece, rows_cleared, level.detail)
-    started = time.perf_counter()
-    probabilities, side, usage = tournament(
-        state, texts, side_questions(grid, slot, since_bar), model
-    )
-    usage["ms"] = round((time.perf_counter() - started) * 1000)
+    def difficulty(self, key: str | None) -> Difficulty:
+        return difficulty(key)
 
-    decision = decide(
-        by_spot,
-        answers(probabilities, side),
-        level,
-        model=model_id(model),
-        usage=usage,
-        slot=slot,
-    )
-    # The house rules explain themselves in Jev's name; this well has another player.
-    decision.note = decision.note.replace("Jev", "Laya")
-    return decision, by_spot, level
+    def ask(self, turn: Turn) -> Reply:
+        detail = turn.level.detail
+        texts = {
+            spot: describe(landing, detail, turn.next_piece) for spot, landing in turn.menu.items()
+        }
+        state = well_state(turn.grid, turn.piece, turn.next_piece, turn.rows_cleared, detail)
+        side = side_questions(turn.grid, turn.slot, turn.since_bar)
+        probabilities, side_answers, usage = tournament(state, texts, side, turn.model)
+        return Reply(answers(probabilities, side_answers), model_id(turn.model), usage)
+
+
+LAYA = Laya()
+
+# The shared harness with Laya asking: what the arcade and self-play call.
+play_piece = partial(play, LAYA)
 
 
 def tournament(
