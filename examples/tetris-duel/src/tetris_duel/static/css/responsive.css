@@ -1,0 +1,18 @@
+/* Narrower screens and reduced motion. Last, so these win. */
+
+/* ------------------------------------------------------------ narrower */
+
+@media (max-width: 1040px) {
+  .thinking-body { grid-template-columns: 1fr; gap: 16px; }
+  .match { grid-template-columns: 1fr; }
+  .middle { grid-template-columns: repeat(3, auto); padding-top: 0; align-items: center; }
+  .middle .lead { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  .masthead { grid-template-columns: 1fr; }
+  :root { --cell: 7.5vw; }
+  .middle { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

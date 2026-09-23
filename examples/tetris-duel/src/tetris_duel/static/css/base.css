@@ -1,0 +1,49 @@
+/* The tetris duel — a bright little arcade. Tokens, reset and page frame here;
+   one file per part of the page after it, linked in order from index.html.
+   Two wells, thick outlines, candy blocks, and a panel that shows the numbers
+   that actually moved the piece. */
+
+:root {
+  --ink: #2b1f4a;
+  --ink-soft: #6a5f8a;
+  --paper: #fffdf8;
+  --line: #2b1f4a;
+  --jev: #7b5cff;
+  --you: #ff4d94;
+  --lime: #3ddc84;
+  --sun: #ffd23f;
+  --cell: clamp(15px, 2.2vw, 25px);
+  --radius: 18px;
+  --shadow: 6px 6px 0 rgba(43, 31, 74, 0.16);
+
+  --I: #46d9ff;
+  --O: #ffd23f;
+  --T: #b46cff;
+  --S: #3ddc84;
+  --Z: #ff6b6b;
+  --J: #5b7bff;
+  --L: #ff9f43;
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 12% -10%, #ffe9c9 0%, transparent 60%),
+    radial-gradient(900px 500px at 88% 0%, #ffd9ee 0%, transparent 55%),
+    linear-gradient(170deg, #fff6ec 0%, #f7ecff 45%, #e6efff 100%);
+  background-attachment: fixed;
+}
+
+h1, h2, .num, .start, .level, .who, .versus { font-family: Fredoka, system-ui, sans-serif; }
+
+a { color: var(--jev); text-underline-offset: 3px; }
+
+.arcade { max-width: 1260px; margin: 0 auto; padding: 26px 20px 56px; }
+

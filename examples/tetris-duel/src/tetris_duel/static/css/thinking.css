@@ -1,0 +1,90 @@
+/* The "what X said about this piece" cards. */
+
+/* ------------------------------------------------------------- thinking */
+
+.card {
+  background: var(--paper);
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+
+.thinking { margin-top: 20px; }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 2px dashed rgba(43, 31, 74, 0.18);
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+.card-title { font-weight: 700; letter-spacing: -0.2px; }
+.card-note { font-family: "JetBrains Mono", monospace; font-size: 0.74rem; color: var(--ink-soft); }
+
+.thinking-body { display: grid; grid-template-columns: 1.1fr 1.4fr 1fr; gap: 22px; }
+
+.chatter {
+  margin: 0 0 8px;
+  font-family: Fredoka, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.pick { margin: 0; color: var(--ink-soft); font-size: 0.9rem; }
+.pick b { color: var(--ink); font-weight: 600; }
+
+.overrule {
+  margin: 10px 0 0;
+  font-size: 0.86rem;
+  background: #fff6d6;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.bars { display: grid; align-content: start; gap: 7px; }
+.bars .empty { margin: 0; color: var(--ink-soft); font-size: 0.88rem; }
+
+.bar { display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: center; font-size: 0.82rem; }
+.bar .pct { font-family: "JetBrains Mono", monospace; text-align: right; color: var(--ink-soft); }
+.bar .track { position: relative; background: rgba(43, 31, 74, 0.07); border-radius: 999px; height: 22px; overflow: hidden; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: #d9cfff; border-radius: 999px; transition: width 0.3s ease; }
+.bar .label {
+  position: relative;
+  padding: 0 10px;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar.is-pick .fill { background: var(--jev); }
+.bar.is-pick .label { color: #fff; font-weight: 600; }
+.bar.is-taken .track { outline: 2.5px solid var(--sun); outline-offset: 1px; }
+
+.meters { display: grid; align-content: start; gap: 12px; }
+.meter-head { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 4px; }
+.meter-head span:last-child { font-family: "JetBrains Mono", monospace; color: var(--ink); }
+.meters .track { background: rgba(43, 31, 74, 0.07); border-radius: 999px; height: 10px; overflow: hidden; }
+.meters .fill { height: 100%; width: 0; border-radius: 999px; transition: width 0.35s ease; }
+.fill.danger { background: linear-gradient(90deg, var(--lime), var(--sun) 55%, #ff5252); }
+.fill.clear { background: var(--I); }
+.fill.hold { background: var(--T); }
+.fill.conf { background: var(--jev); }
+.meter-note { margin: 5px 0 0; font-size: 0.76rem; color: var(--ink-soft); }
+
+.error {
+  margin: 14px 0 0;
+  background: #ffe7e7;
+  border: 2px solid #ff6b6b;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+}
+
+footer { margin: 26px 0 0; color: var(--ink-soft); font-size: 0.86rem; max-width: 90ch; line-height: 1.55; }
+footer code { font-family: "JetBrains Mono", monospace; font-size: 0.82em; }
+

@@ -3,11 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jev vs You — a self-playing well</title>
+<title>Tetris duel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/arcade.css">
+<link rel="stylesheet" href="/static/css/base.css">
+<link rel="stylesheet" href="/static/css/masthead.css">
+<link rel="stylesheet" href="/static/css/wells.css">
+<link rel="stylesheet" href="/static/css/middle.css">
+<link rel="stylesheet" href="/static/css/thinking.css">
+<link rel="stylesheet" href="/static/css/overlays.css">
+<link rel="stylesheet" href="/static/css/responsive.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%F0%9F%95%B9%EF%B8%8F</text></svg>">
 </head>
 <body>
@@ -32,6 +38,13 @@
         <button class="level is-on" data-level="grandmaster" role="radio" aria-checked="true">Grandmaster</button>
       </div>
       <button class="start" id="start">Start the match</button>
+    </div>
+    <div class="matchup">
+      <span class="seat-label">left well</span>
+      <div class="levels" id="leftSeats" role="radiogroup" aria-label="Left well"></div>
+      <span class="seat-vs">vs</span>
+      <span class="seat-label">right well</span>
+      <div class="levels" id="rightSeats" role="radiogroup" aria-label="Right well"></div>
     </div>
     <p class="blurb" id="blurb"></p>
   </header>
@@ -103,19 +116,19 @@
   <!-- ------------------------------------------------------- the thinking -->
   <section class="thinking card" id="thinking">
     <div class="card-head">
-      <span class="card-title">what Jev said about this piece</span>
+      <span class="card-title">what <span data-player>Jev</span> said about this piece</span>
       <span class="card-note" id="modelNote">one request per piece</span>
     </div>
 
     <div class="thinking-body">
       <div class="column">
-        <p class="chatter" id="chatter">Press start and Jev takes the left-hand well.</p>
+        <p class="chatter" id="chatter">Press start and <span data-player>Jev</span> takes the left-hand well.</p>
         <p class="pick" id="pick"></p>
         <p class="overrule" id="overrule" hidden></p>
       </div>
 
       <div class="column bars" id="bars">
-        <p class="empty">The landings Jev weighed up will show up here.</p>
+        <p class="empty">The landings <span data-player>Jev</span> weighed up will show up here.</p>
       </div>
 
       <div class="column meters">
@@ -144,23 +157,7 @@
   </section>
 
   <footer>
-    <p>
-      Every piece on the left is one request to
-      <a href="https://docs.typesafe.ai/models">Jev</a>: a
-      <a href="https://docs.typesafe.ai/primitives/choice">Choice</a> over every legal landing,
-      a <a href="https://docs.typesafe.ai/primitives/score">Score</a> for how much trouble the well
-      is in, a <a href="https://docs.typesafe.ai/primitives/noul">Noul</a> on whether to clear rows
-      now — and, on Grandmaster, one more asking whether a named column is worth keeping empty for
-      a four-row clear. All of it answered against one reading of the board.
-      The answer is a rotation and a column, which the piece then plays out: it turns, walks
-      across, and either falls or — when Jev's confidence clears the bar in
-      <code>pilot.py</code> — gets hard-dropped. Everything Jev is told is worked out in code
-      and handed over in words, because Jev reads language far better than it reads
-      arithmetic. Difficulty is how much of that it gets: where the piece lands, then the
-      well it leaves, then how it sits on the ground, then what the next piece could do
-      afterwards. Both wells get the same pieces and the same
-      gravity; points come from cleared rows only.
-    </p>
+    <p id="about"></p>
   </footer>
 </div>
 
@@ -173,6 +170,6 @@
   </div>
 </div>
 
-<script src="/static/arcade.js"></script>
+<script type="module" src="/static/js/main.js"></script>
 </body>
 </html>

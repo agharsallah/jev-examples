@@ -18,13 +18,13 @@ def clock(seconds: float) -> str:
     return f"{int(seconds) // 60}:{int(seconds) % 60:02d}"
 
 
-def banner() -> None:
+def banner(who: str = "Jev", tagline: str = "a self-playing well · one API call per piece") -> None:
     console.print(
         Text.from_markup(
             "\n[bold magenta]  ██[/bold magenta]\n"
-            "[bold magenta] ████[/bold magenta]   [bold]JEV vs YOU[/bold]\n"
+            f"[bold magenta] ████[/bold magenta]   [bold]{who.upper()} vs YOU[/bold]\n"
             "[bold magenta]  ██[/bold magenta]    "
-            "[dim]a self-playing well · one API call per piece[/dim]\n"
+            f"[dim]{tagline}[/dim]\n"
         )
     )
 
@@ -38,8 +38,8 @@ def well(rows: list[str], title: str, subtitle: str = "") -> Panel:
     return Panel(body, title=title, subtitle=subtitle, border_style="magenta", expand=False)
 
 
-def reading(payload: dict) -> Panel:
-    """What Jev said about this move."""
+def reading(payload: dict, who: str = "Jev") -> Panel:
+    """What the player said about this move."""
     table = Table.grid(padding=(0, 2))
     table.add_column(style="dim", justify="right")
     table.add_column()
@@ -76,7 +76,7 @@ def reading(payload: dict) -> Panel:
     parts = [table, Text(), bars]
     if payload["overruled"]:
         parts += [Text(), Text(payload["note"], style="bold yellow")]
-    return Panel(Group(*parts), border_style="cyan", title="what Jev said", expand=False)
+    return Panel(Group(*parts), border_style="cyan", title=f"what {who} said", expand=False)
 
 
 def scoreline(label: str, tally, pieces: int) -> Text:

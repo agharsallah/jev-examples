@@ -1,0 +1,90 @@
+/* The header: title, level pills, seat pickers, blurb. */
+
+/* ------------------------------------------------------------- masthead */
+
+.masthead {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px 24px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.wordmark { display: flex; align-items: center; gap: 16px; }
+
+.logo {
+  display: grid;
+  grid-template-columns: repeat(2, 15px);
+  grid-auto-rows: 15px;
+  gap: 3px;
+  transform: rotate(-8deg);
+}
+.logo i { border-radius: 4px; border: 2px solid var(--line); }
+.logo i:nth-child(1) { background: var(--T); }
+.logo i:nth-child(2) { background: var(--sun); }
+.logo i:nth-child(3) { background: var(--I); }
+.logo i:nth-child(4) { background: var(--you); }
+
+.masthead h1 { margin: 0; font-size: 2.1rem; font-weight: 700; letter-spacing: -0.5px; }
+.masthead h1 em { font-style: normal; color: var(--you); }
+.masthead p { margin: 2px 0 0; color: var(--ink-soft); font-size: 0.98rem; }
+
+.setup { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.levels {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--paper);
+  border: 2.5px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+.level {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.level:hover { color: var(--ink); }
+.level.is-on { background: var(--ink); color: #fff; }
+.level:disabled { opacity: 0.4; cursor: not-allowed; }
+.level:disabled:hover { color: var(--ink-soft); }
+
+.matchup { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.seat-label {
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.seat-vs { font-family: Fredoka, system-ui, sans-serif; font-weight: 600; color: var(--you); padding: 0 4px; }
+
+.start {
+  border: 2.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.start:hover { transform: translate(-1px, -1px); box-shadow: 8px 8px 0 rgba(43, 31, 74, 0.18); }
+.start:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 rgba(43, 31, 74, 0.18); }
+
+.blurb {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  max-width: 78ch;
+}
+

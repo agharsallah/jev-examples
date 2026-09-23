@@ -1,0 +1,67 @@
+/* Between the wells: VS badge, clock, lead line, your keys and the touch pad. */
+
+/* --------------------------------------------------------------- middle */
+
+.middle { display: grid; gap: 12px; justify-items: center; align-content: start; padding-top: 34px; }
+
+.versus {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--ink);
+  border-radius: 999px;
+  padding: 10px 20px;
+  box-shadow: var(--shadow);
+  transform: rotate(-5deg);
+}
+
+.clock {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+.clock .num { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.clock.is-stopped .num { color: var(--ink-soft); }
+
+.lead {
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  min-height: 2.6em;
+  line-height: 1.3;
+}
+
+.keys, .pad {
+  width: 100%;
+  background: var(--paper);
+  border: 2.5px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+.keys ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 5px; font-size: 0.84rem; }
+.keys li { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+kbd {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  background: #f1ecff;
+  border: 1.5px solid rgba(43, 31, 74, 0.25);
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  padding: 1px 6px;
+  color: var(--ink);
+}
+
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.pad button {
+  font-size: 1rem;
+  padding: 10px 0;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: #f4efff;
+  cursor: pointer;
+}
+.pad button:active { background: var(--sun); }
+.pad .wide { grid-column: 1 / -1; font-family: Fredoka, sans-serif; font-weight: 500; }
+

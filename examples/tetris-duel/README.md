@@ -84,11 +84,23 @@ behind [Vercel's deployment protection](https://vercel.com/docs/deployment-prote
 Netlify is not an option without a rewrite: its functions run JavaScript, TypeScript and
 Go, and the game logic here is Python.
 
+## Choosing the players
+
+The arcade has one seat picker for each well. Jev is built in, and the right-hand well can
+be you. Any other installed package can offer a player by exposing a function that returns a
+`players.Player` under the `tetris_duel.players` entry point group; [tetris-laya](../tetris-laya)
+does this for a model that runs on your own machine. With it installed
+(`uv sync --all-packages`), `duel serve` offers Laya vs You, Jev vs Laya, and so on, with a
+thinking card for each model at the table. A player that cannot play right now — Jev with no
+key — is shown greyed out with the reason.
+
+On Vercel only Jev is installed, so the picker there is Jev against you.
+
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `duel serve` | Opens the arcade: Jev's well on the left, yours on the right, and every number behind the move underneath |
+| `duel serve` | Opens the arcade: pick who plays each well on the page — Jev, you, or any other installed player — with every number behind each move underneath. `--left`, `--right` set the starting matchup |
 | `duel watch` | Jev plays alone in the terminal. `--pieces`, `--seed`, `--difficulty`, `--model` |
 | `duel bench` | Plays the same seeded pieces at every difficulty and prints what each scored. `--pieces`, `--games`, `--seed`, repeatable `--difficulty` |
 | `duel levels` | What each difficulty actually changes |
@@ -282,14 +294,33 @@ player that sometimes gets its bet paid.
 
 ```
 src/tetris_duel/
-  board.py       the well, the seven pieces, every legal landing and its consequences
-  questions.py   the docket, and the words the ground and each landing are described in
-  engine.py      the only module that calls the API
-  pilot.py       difficulty, and the house rules over Jev's answers
-  duel.py        one piece, start to finish, plus self-play for the terminal and the bench
-  web.py         FastAPI: POST a well, get a move
-app.py           Vercel entrypoint, re-exports web.app
-  render.py      terminal theatre, via rich
-  cli.py         typer commands
-  static/        the arcade
+  board/           the well, the seven pieces, every legal landing and its consequences
+    pieces.py        the shapes, their rotations and what a player calls them
+    well.py          the grid: read it, measure it, drop a piece, clear rows
+    reading.py       what the ground looks like, said in words
+    landing.py       the menu of legal landings
+  questions.py     the docket, and the words the ground and each landing are described in
+  engine.py        the only module that calls the API
+  pilot.py         difficulty, and the house rules over Jev's answers
+  duel.py          one piece, start to finish
+  payload.py       a move in the shape the scoreboard draws it
+  selfplay.py      whole matches for `watch` and `bench`, scored like the arcade
+  players.py       who can sit at a well: Jev, plus any package registered as a player
+  web.py           FastAPI: the setup, and POST a well to get that player's move
+  render.py        terminal theatre, via rich
+  cli.py           typer commands
+  static/          the arcade: index.html, css/ by part of the page, js/ built from web/
+web/src/           the arcade's TypeScript (build with `pnpm build` at the repo root)
+  main.ts          boot: fetch the setup, seat the players, start the frame loop
+  api.ts           every request the page makes, and the types of the answers
+  match.ts         one match: seating, the shared deal, the clock, the finale
+  controls.ts      keys, touch pad, level pills
+  game/            rules, pieces and rotations, the seeded seven-bag, gravity
+  players/         a well (player.ts), you (human.ts), a model (bot.ts)
+  ui/              the screen, thinking cards, seat pickers, scoreboard text, confetti
+app.py             Vercel entrypoint, re-exports web.app
 ```
+
+The browser loads the compiled modules in `static/js/` directly, with no bundler, and they
+are committed, so `duel serve` and Vercel need no Node. Change the TypeScript in `web/src/`,
+then run `pnpm build` (or `pnpm watch`) from the repo root.
