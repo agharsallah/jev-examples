@@ -2,7 +2,7 @@
  * with those labels hidden from Jev. Calibration is the headline, because it
  * is what makes a threshold mean anything. */
 import { h } from "../dom.js";
-import { dollars, pct, two } from "../format.js";
+import { dollars, githubLink, pct, two } from "../format.js";
 import { confusionTable, coverageChart, reliabilityChart } from "./charts.js";
 export function evaluationView(report, applyAt, onOpen) {
     const t = report.totals;
@@ -17,7 +17,7 @@ function familyCard(f, applyAt, onOpen) {
             ? "When one pair dominates, read the two label descriptions side by side: often nothing in an issue's text could tell them apart."
             : "")
         : null, h("details", null, h("summary", null, "confusion matrix"), confusionTable(f.confusion.labels, f.confusion.cells, { none_fit: "none fits" })), f.disagreements.length
-        ? h("details", null, h("summary", null, `where it disagrees most confidently (${f.disagreements.length})`), h("ol", { class: "disagree" }, f.disagreements.map((d) => h("li", null, h("button", { class: "link", type: "button", onclick: () => onOpen(d.number) }, `#${d.number}`), " ", h("span", null, d.title), " ", h("span", { class: "faint" }, `on it ${d.truth.join(", ")} (p ${two(d.p_truth)}) · Jev ${d.pick} (p ${two(d.p)})`)))))
+        ? h("details", null, h("summary", null, `where it disagrees most confidently (${f.disagreements.length})`), h("ol", { class: "disagree" }, f.disagreements.map((d) => h("li", null, h("button", { class: "link", type: "button", onclick: () => onOpen(d.number) }, `#${d.number}`), " ", h("span", null, d.title), " ", githubLink(d.url, "↗"), " ", h("span", { class: "faint" }, `on it ${d.truth.join(", ")} (p ${two(d.p_truth)}) · Jev ${d.pick} (p ${two(d.p)})`)))))
         : null);
 }
 function big(value, label) {

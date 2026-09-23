@@ -8,7 +8,7 @@
  * union-find over the pairwise duplicate answers, and the filters narrow
  * every view at once. Nothing here asks Jev anything. */
 import { h } from "../dom.js";
-import { dollars, meter, pct, two } from "../format.js";
+import { dollars, githubLink, meter, pct, two } from "../format.js";
 // Validated dark-surface categorical slots, in fixed order, one per kind.
 export const KIND_COLOR = {
     feature: "#3987e5",
@@ -273,7 +273,7 @@ function shortlists(rows, flagged, hooks) {
     const list = (flag, score, metric, why) => {
         const items = rows.filter((r) => flagged.get(r.number).has(flag)).sort((a, b) => score(b) - score(a));
         return h("section", { class: `card shortlist sl-${flag}` }, h("header", { class: "card-head" }, h("h3", null, FLAG_WORDS[flag][0]), h("button", { class: "ghost small", type: "button", onclick: () => hooks.filter({ flag }) }, `all ${items.length}`)), h("p", { class: "faint small" }, FLAG_WORDS[flag][1], ` · ranked by ${metric}`), items.length
-            ? h("ol", null, items.slice(0, 8).map((r) => h("li", null, h("button", { class: "sl-item", type: "button", onclick: () => hooks.open(r.number) }, h("span", { class: "num" }, `#${r.number}`), h("span", { class: "sl-title" }, r.title), h("span", { class: "sl-score" }, meter(score(r), { tone: "t-lamp" }), h("b", null, two(score(r)))), h("small", { class: "faint" }, why(r))))))
+            ? h("ol", null, items.slice(0, 8).map((r) => h("li", { class: "sl-row" }, h("button", { class: "sl-item", type: "button", onclick: () => hooks.open(r.number) }, h("span", { class: "num" }, `#${r.number}`), h("span", { class: "sl-title" }, r.title), h("span", { class: "sl-score" }, meter(score(r), { tone: "t-lamp" }), h("b", null, two(score(r)))), h("small", { class: "faint" }, why(r))), githubLink(r.url, "↗"))))
             : h("p", { class: "faint" }, "None right now."));
     };
     return h("div", { class: "shortlists" }, list("ready", (r) => r.readiness * (0.6 + 0.4 * r.impact), "readiness × impact", (r) => `${r.kind}${r.component ? ` · ${r.component}` : ""} · impact ${two(r.impact)}`), list("beginner", (r) => r.beginner, "beginner score", (r) => `scope ${two(r.scope)}${r.beginner_label && r.beginner_label_p !== null ? ` · ‘${r.beginner_label}’ ${two(r.beginner_label_p)}` : ""}`), list("decision", (r) => r.needs_decision * (0.5 + 0.5 * r.impact), "open question × impact", (r) => `${r.kind} · impact ${two(r.impact)} · ${r.comments} comments`), list("ask", (r) => r.impact, "impact", (r) => `missing ${r.missing.map((m) => m.slice(4).replace(/_/g, " ")).join(", ") || "details"}`));
@@ -296,8 +296,8 @@ function clusterCard(c, hooks) {
         : h("p", { class: "cl-hint" }, `All open: keep #${keep}, close the other${c.members.length > 2 ? "s" : ""} as duplicate${c.members.length > 2 ? "s" : ""}.`), h("ul", null, c.members.map((n) => {
         const m = c.titles.get(n);
         return h("li", null, m.open
-            ? h("button", { class: "link", type: "button", onclick: () => hooks.open(n) }, `#${n}`)
-            : h("a", { href: m.url, target: "_blank", rel: "noopener" }, `#${n}`), " ", h("span", { class: `state s-${m.state}` }, m.state), n === keep ? h("span", { class: "keep" }, "oldest") : null, " ", h("span", { class: "cl-title" }, m.title));
+            ? h("button", { class: "link", type: "button", title: "Open the triage", onclick: () => hooks.open(n) }, `#${n}`)
+            : h("span", { class: "num" }, `#${n}`), " ", h("span", { class: `state s-${m.state}` }, m.state), n === keep ? h("span", { class: "keep" }, "oldest") : null, " ", h("span", { class: "cl-title" }, m.title), m.url ? [" ", githubLink(m.url, "↗")] : null);
     })), h("div", { class: "cl-edges" }, c.edges.map((e) => h("span", { class: "move" }, `#${e.a} ⇄ #${e.b} `, h("b", null, two(e.same))))));
 }
 function clusterGraph(c) {
@@ -330,8 +330,8 @@ function explorer(rows, flagged, sort, hooks) {
             : b[sort] - a[sort]);
     const col = (key, text) => h("th", { class: `sortable${sort === key ? " sorted" : ""}`, onclick: () => hooks.sort(key), "aria-sort": sort === key ? "descending" : "none" }, text);
     const bar = (v) => h("td", { class: "num" }, h("span", { class: "mini" }, meter(v, { tone: "t-lamp" })), two(v));
-    return h("section", { class: "card" }, head("Every issue", `${rows.length} shown · click a row for the full triage · click a column to sort`), h("div", { class: "table-wrap" }, h("table", { class: "explorer" }, h("thead", null, h("tr", null, col("number", "#"), h("th", null, "title"), h("th", null, "kind"), h("th", null, "component"), col("readiness", "ready"), col("beginner", "beginner"), col("impact", "impact"), col("priority", "priority"), col("age_days", "age"), h("th", null, "flags"))), h("tbody", null, sorted.slice(0, 200).map((r) => h("tr", { tabindex: 0, onclick: () => hooks.open(r.number), onkeydown: (e) => { if (e.key === "Enter")
-            hooks.open(r.number); } }, h("td", { class: "num" }, `#${r.number}`), h("td", { class: "t-title", title: r.title }, r.title), h("td", null, h("span", { class: "kind-dot", style: `background:${KIND_COLOR[r.kind] ?? KIND_COLOR.other}` }), r.kind), h("td", { class: "faint" }, r.component ?? "—"), bar(r.readiness), bar(r.beginner), bar(r.impact), bar(r.priority), h("td", { class: "num faint" }, r.age_days === null ? "—" : `${r.age_days}d`), h("td", null, [...flagged.get(r.number)].map((fl) => h("span", { class: `flag fl-${fl}` }, FLAG_ICON[fl] ?? fl)))))))), rows.length > 200 ? h("p", { class: "faint small" }, `Showing the first 200 of ${rows.length}. Narrow with the filters above.`) : null);
+    return h("section", { class: "card" }, head("Every issue", `${rows.length} shown · click a row for the full triage · click a column to sort`), h("div", { class: "table-wrap" }, h("table", { class: "explorer" }, h("thead", null, h("tr", null, col("number", "#"), h("th", null, "title"), h("th", { "aria-label": "GitHub" }, ""), h("th", null, "kind"), h("th", null, "component"), col("readiness", "ready"), col("beginner", "beginner"), col("impact", "impact"), col("priority", "priority"), col("age_days", "age"), h("th", null, "flags"))), h("tbody", null, sorted.slice(0, 200).map((r) => h("tr", { tabindex: 0, onclick: () => hooks.open(r.number), onkeydown: (e) => { if (e.key === "Enter")
+            hooks.open(r.number); } }, h("td", { class: "num" }, `#${r.number}`), h("td", { class: "t-title", title: r.title }, r.title), h("td", null, githubLink(r.url, "↗")), h("td", null, h("span", { class: "kind-dot", style: `background:${KIND_COLOR[r.kind] ?? KIND_COLOR.other}` }), r.kind), h("td", { class: "faint" }, r.component ?? "—"), bar(r.readiness), bar(r.beginner), bar(r.impact), bar(r.priority), h("td", { class: "num faint" }, r.age_days === null ? "—" : `${r.age_days}d`), h("td", null, [...flagged.get(r.number)].map((fl) => h("span", { class: `flag fl-${fl}` }, FLAG_ICON[fl] ?? fl)))))))), rows.length > 200 ? h("p", { class: "faint small" }, `Showing the first 200 of ${rows.length}. Narrow with the filters above.`) : null);
 }
 // -- knobs and definitions --------------------------------------------------
 function knobsCard(data, k, hooks) {

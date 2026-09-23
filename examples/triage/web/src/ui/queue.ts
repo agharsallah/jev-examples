@@ -3,7 +3,7 @@
 
 import type { QueueRow, ScanResult } from "../api.js";
 import { h } from "../dom.js";
-import { dollars, meter, two } from "../format.js";
+import { dollars, githubLink, meter, two } from "../format.js";
 
 const LANE_ORDER = ["private", "human", "needs_info", "duplicate", "close", "confirm", "auto"];
 
@@ -49,7 +49,7 @@ function queueCard(row: QueueRow, onOpen: (n: number) => void) {
   const onIt = new Set(row.labels);
   const add = a.labels.filter((l) => l.status !== "unsure" && !onIt.has(l.label));
   const dup = a.duplicates[0];
-  return h("button", { class: "qcard", type: "button", onclick: () => onOpen(row.number) },
+  return h("div", { class: "qcard-wrap" }, h("button", { class: "qcard", type: "button", onclick: () => onOpen(row.number) },
     h("div", { class: "qcard-head" },
       h("span", { class: "num" }, `#${row.number}`),
       h("span", { class: `kind t-${row.kind}` }, row.kind, h("small", null, two(row.kind_confidence))),
@@ -60,5 +60,5 @@ function queueCard(row: QueueRow, onOpen: (n: number) => void) {
     a.drift.length ? h("div", { class: "qcard-note" }, `drift: ${a.drift[0]!.current} → ${a.drift[0]!.suggested}`) : null,
     dup && dup.verdict !== "unrelated" ? h("div", { class: "qcard-note" }, `${dup.verdict}: #${dup.number} (${two(dup.same)})`) : null,
     a.missing.length ? h("div", { class: "qcard-note" }, `missing: ${a.missing.map((m) => m.slice(4).replace(/_/g, " ")).join(", ")}`) : null,
-  );
+  ), githubLink(row.url));
 }

@@ -4,7 +4,7 @@
 
 import type { EvalFamily, EvalReport } from "../api.js";
 import { h } from "../dom.js";
-import { dollars, pct, two } from "../format.js";
+import { dollars, githubLink, pct, two } from "../format.js";
 import { confusionTable, coverageChart, reliabilityChart } from "./charts.js";
 
 export function evaluationView(report: EvalReport, applyAt: number, onOpen: (n: number) => void) {
@@ -52,7 +52,7 @@ function familyCard(f: EvalFamily, applyAt: number, onOpen: (n: number) => void)
           h("ol", { class: "disagree" }, f.disagreements.map((d) =>
             h("li", null,
               h("button", { class: "link", type: "button", onclick: () => onOpen(d.number) }, `#${d.number}`),
-              " ", h("span", null, d.title), " ",
+              " ", h("span", null, d.title), " ", githubLink(d.url, "↗"), " ",
               h("span", { class: "faint" }, `on it ${d.truth.join(", ")} (p ${two(d.p_truth)}) · Jev ${d.pick} (p ${two(d.p)})`),
             ))))
       : null,

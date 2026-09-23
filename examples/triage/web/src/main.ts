@@ -5,6 +5,7 @@
 import { api, overviewApi, queueApi } from "./api.js";
 import type { Assessment, Counterfactual, EvalReport, IssueResult, Meta, Overview, QueueRow, RepoResult, ScanResult, Settings } from "./api.js";
 import { byId, fill, h } from "./dom.js";
+import { githubLink } from "./format.js";
 import {
   checklistCard,
   duplicatesCard,
@@ -197,6 +198,7 @@ function drawIssue(): void {
       h("a", { href: m.issue.url, target: "_blank", rel: "noopener" }, `${m.repo.slug}#${m.issue.number}`),
       ` · ${m.issue.state.toLowerCase()} · by ${m.issue.author} (${m.issue.association.toLowerCase()}) · ${m.issue.comments} comments`),
     h("h2", null, m.issue.title),
+    githubLink(m.issue.url, "Open on GitHub ↗"),
   );
   drawSheet(el.sheet, m, a, state.lens, el.inspector, { onRemove: (units) => runCounterfactual([units]) });
   el.usage.textContent = usageLine(m);

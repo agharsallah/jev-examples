@@ -3,6 +3,7 @@
  * view can be linked: #owner/repo/123. */
 import { api, overviewApi, queueApi } from "./api.js";
 import { byId, fill, h } from "./dom.js";
+import { githubLink } from "./format.js";
 import { checklistCard, duplicatesCard, rawCard, readingCard, traceCard, usageLine, verdictCard, whyCard, } from "./ui/cards.js";
 import { controls } from "./ui/controls.js";
 import { evaluationView } from "./ui/evaluation.js";
@@ -145,7 +146,7 @@ function drawIssue() {
     el.hint.hidden = true;
     fill(el.issueHead, state.overview
         ? h("button", { class: "ghost small back", type: "button", onclick: () => backToOverview() }, "← back to the overview")
-        : null, h("div", { class: "eyebrow" }, h("a", { href: m.issue.url, target: "_blank", rel: "noopener" }, `${m.repo.slug}#${m.issue.number}`), ` · ${m.issue.state.toLowerCase()} · by ${m.issue.author} (${m.issue.association.toLowerCase()}) · ${m.issue.comments} comments`), h("h2", null, m.issue.title));
+        : null, h("div", { class: "eyebrow" }, h("a", { href: m.issue.url, target: "_blank", rel: "noopener" }, `${m.repo.slug}#${m.issue.number}`), ` · ${m.issue.state.toLowerCase()} · by ${m.issue.author} (${m.issue.association.toLowerCase()}) · ${m.issue.comments} comments`), h("h2", null, m.issue.title), githubLink(m.issue.url, "Open on GitHub ↗"));
     drawSheet(el.sheet, m, a, state.lens, el.inspector, { onRemove: (units) => runCounterfactual([units]) });
     el.usage.textContent = usageLine(m);
     fill(el.cards, verdictCard(m, a, meta), whyCard(m, a, state.counterfactuals, state.asking, () => runCounterfactual(null)), readingCard(m, meta, state.settings), checklistCard(m, a, state.settings), duplicatesCard(a, state.settings));

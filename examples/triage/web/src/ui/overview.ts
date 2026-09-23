@@ -10,7 +10,7 @@
 
 import type { Overview, OverviewEdge, OverviewRow } from "../api.js";
 import { h } from "../dom.js";
-import { dollars, meter, pct, two } from "../format.js";
+import { dollars, githubLink, meter, pct, two } from "../format.js";
 
 // Validated dark-surface categorical slots, in fixed order, one per kind.
 export const KIND_COLOR: Record<string, string> = {
@@ -390,13 +390,15 @@ function shortlists(rows: OverviewRow[], flagged: Map<number, Set<Flag>>, hooks:
       h("p", { class: "faint small" }, FLAG_WORDS[flag][1], ` · ranked by ${metric}`),
       items.length
         ? h("ol", null, items.slice(0, 8).map((r) =>
-            h("li", null,
+            h("li", { class: "sl-row" },
               h("button", { class: "sl-item", type: "button", onclick: () => hooks.open(r.number) },
                 h("span", { class: "num" }, `#${r.number}`),
                 h("span", { class: "sl-title" }, r.title),
                 h("span", { class: "sl-score" }, meter(score(r), { tone: "t-lamp" }), h("b", null, two(score(r)))),
                 h("small", { class: "faint" }, why(r)),
-              ))))
+              ),
+              githubLink(r.url, "↗"),
+            )))
         : h("p", { class: "faint" }, "None right now."),
     );
   };
@@ -439,12 +441,13 @@ function clusterCard(c: Cluster, hooks: OverviewHooks) {
       const m = c.titles.get(n)!;
       return h("li", null,
         m.open
-          ? h("button", { class: "link", type: "button", onclick: () => hooks.open(n) }, `#${n}`)
-          : h("a", { href: m.url, target: "_blank", rel: "noopener" }, `#${n}`),
+          ? h("button", { class: "link", type: "button", title: "Open the triage", onclick: () => hooks.open(n) }, `#${n}`)
+          : h("span", { class: "num" }, `#${n}`),
         " ",
         h("span", { class: `state s-${m.state}` }, m.state),
         n === keep ? h("span", { class: "keep" }, "oldest") : null,
         " ", h("span", { class: "cl-title" }, m.title),
+        m.url ? [" ", githubLink(m.url, "↗")] : null,
       );
     })),
     h("div", { class: "cl-edges" }, c.edges.map((e) =>
@@ -492,13 +495,14 @@ function explorer(rows: OverviewRow[], flagged: Map<number, Set<Flag>>, sort: So
     h("div", { class: "table-wrap" },
       h("table", { class: "explorer" },
         h("thead", null, h("tr", null,
-          col("number", "#"), h("th", null, "title"), h("th", null, "kind"), h("th", null, "component"),
+          col("number", "#"), h("th", null, "title"), h("th", { "aria-label": "GitHub" }, ""), h("th", null, "kind"), h("th", null, "component"),
           col("readiness", "ready"), col("beginner", "beginner"), col("impact", "impact"), col("priority", "priority"),
           col("age_days", "age"), h("th", null, "flags"))),
         h("tbody", null, sorted.slice(0, 200).map((r) =>
           h("tr", { tabindex: 0, onclick: () => hooks.open(r.number), onkeydown: (e: Event) => { if ((e as KeyboardEvent).key === "Enter") hooks.open(r.number); } },
             h("td", { class: "num" }, `#${r.number}`),
             h("td", { class: "t-title", title: r.title }, r.title),
+            h("td", null, githubLink(r.url, "↗")),
             h("td", null, h("span", { class: "kind-dot", style: `background:${KIND_COLOR[r.kind] ?? KIND_COLOR.other}` }), r.kind),
             h("td", { class: "faint" }, r.component ?? "—"),
             bar(r.readiness), bar(r.beginner), bar(r.impact), bar(r.priority),

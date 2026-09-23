@@ -32,3 +32,11 @@ export const STATUS_WORD = {
     confirm: "confirm",
     unsure: "unsure",
 };
+/** The issue on GitHub, in a new tab. Stops the click from also opening the
+ * in-app triage when it sits inside a clickable row. */
+export function githubLink(url, text = "GitHub ↗") {
+    const a = h("a", { class: "gh-link", href: url, target: "_blank", rel: "noopener", title: "Open on GitHub" }, text);
+    a.addEventListener("click", (e) => e.stopPropagation());
+    a.addEventListener("keydown", (e) => e.stopPropagation());
+    return a;
+}
