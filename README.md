@@ -13,6 +13,7 @@ cp .env.example .env          # put your TYPESAFE_API_KEY in it
 uv run tribunal judge "the dog ate my migration"
 uv run outbox check "just circling back on this -- no rush at all!!"
 uv run duel serve
+uv run triage issue omnigent-ai/omnigent#8107
 ```
 
 That's the whole setup. Keys live at <https://console.typesafe.ai/keys>, and the `.env` is
@@ -58,6 +59,17 @@ Jev vs Laya, Laya vs you, or any other matchup on the page.
 
 > A 256-token option budget against a 34-landing menu: the menu runs as heats, and the
 > winners meet in a final.
+
+### [triage](examples/triage) — any GitHub repo's issues, read and sorted
+
+`triage issue owner/repo#123` works out the repo's own labels first — one Choice per label,
+*what role does this play here?* — then asks about a hundred questions of the issue in one
+request: which of those labels fit, what's missing from the report, whether a candidate is the
+*same* problem or merely *related*, and what each sentence signals. `triage eval` scores it
+against the labels people already applied, with those labels hidden, and draws the calibration.
+
+> Jev doesn't explain itself, so the "why" is measured: take the strongest sentence out, ask
+> again, and see how far the call moves.
 
 ## What they have in common
 
