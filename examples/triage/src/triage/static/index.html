@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triage — Jev reads the issues</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%F0%9F%8F%B7%EF%B8%8F</text></svg>">
+</head>
+<body>
+<div class="desk">
+
+  <header class="masthead">
+    <div class="wordmark">
+      <span class="mark" aria-hidden="true">⌗</span>
+      <div>
+        <h1>Triage</h1>
+        <p>Point it at any GitHub repo. Jev reads the labels, then the issue.</p>
+      </div>
+    </div>
+    <p class="credo">
+      <a href="https://docs.typesafe.ai/models">Jev</a> answers a hundred narrow questions about an issue
+      in one request and returns probabilities. Which labels to apply, whether it is a duplicate,
+      who should look at it — that is ordinary Python you can read, and tune below.
+    </p>
+  </header>
+
+  <form id="go" class="go" autocomplete="off">
+    <input id="ref" placeholder="owner/repo#123  ·  or an issue URL" aria-label="repository or issue" required>
+    <label class="fresh" title="Ignore the cache and ask Jev again"><input id="fresh" type="checkbox"> fresh</label>
+    <button class="primary" type="submit">Read it</button>
+    <div id="examples" class="examples"></div>
+  </form>
+
+  <div id="status" class="status" role="status" hidden></div>
+
+  <section id="repoBar" class="repo-bar" hidden>
+    <div class="repo-line">
+      <strong id="repoName"></strong>
+      <span id="repoMeta" class="faint"></span>
+      <button id="labelsToggle" class="ghost small" type="button">how Jev read the labels</button>
+    </div>
+    <div id="taxonomy" hidden></div>
+  </section>
+
+  <nav id="tabs" class="tabs" hidden>
+    <button type="button" data-view="overview">Overview</button>
+    <button type="button" data-view="issue">Issue</button>
+    <button type="button" data-view="queue">Queue</button>
+    <button type="button" data-view="eval">Evaluation</button>
+  </nav>
+
+  <p id="hint" class="hint" hidden>Add an issue number — <code>owner/repo#123</code> — to triage one, or open the <strong>Queue</strong> to read every recent open issue at once.</p>
+
+  <section id="overviewView" class="overview-view" hidden>
+    <div class="run-row" id="overviewRunRow">
+      <p class="faint" id="overviewIntro">Every open issue, read once and laid out: what is ready, what a newcomer could take, what waits on a decision, which issues are the same problem twice. One request per issue, sent eight at a time.</p>
+      <label class="small faint">issues <input id="overviewLimit" type="number" min="5" max="1000" placeholder="all"></label>
+      <button id="overviewRun" class="primary" type="button">Read every open issue</button>
+    </div>
+    <div id="overviewSnapshot" class="snapshot" hidden>
+      <span id="overviewAge"></span>
+      <button id="overviewRefresh" class="ghost small" type="button" title="Fetch the open issues from GitHub again; only issues that changed cost a new Jev request">Refresh from GitHub</button>
+    </div>
+    <div id="overviewProgress" class="progress" hidden><div class="progress-fill"></div><span></span></div>
+    <div id="overviewBody"></div>
+  </section>
+
+  <section id="queueView" class="queue-view" hidden>
+    <div class="run-row">
+      <p class="faint">Every recent open issue, one request each, sent together — then sorted into lanes by the same policy. About $0.001–0.002 an issue; cached after the first run.</p>
+      <label class="small faint">issues <input id="queueLimit" type="number" min="5" max="200" value="60"></label>
+      <button id="queueRun" class="primary" type="button">Read the queue</button>
+    </div>
+    <div class="queue-layout">
+      <div id="queueBoard"></div>
+      <aside id="queueKnobs"></aside>
+    </div>
+  </section>
+
+  <section id="evalView" class="eval-view" hidden>
+    <div class="run-row">
+      <p class="faint">Triage recent issues that already carry labels — with those labels hidden from Jev — and score the agreement and the calibration.</p>
+      <label class="small faint">issues <input id="evalLimit" type="number" min="10" max="300" value="100"></label>
+      <button id="evalRun" class="primary" type="button">Run the evaluation</button>
+    </div>
+    <div id="evalBody"></div>
+  </section>
+
+  <main id="issueView" class="issue-view" hidden>
+    <article class="paper-col">
+      <div id="issueHead" class="issue-head"></div>
+      <div class="lens-row">
+        <span class="eyebrow">highlight what each part signals</span>
+        <div id="lens" class="lens" role="group" aria-label="highlight lens">
+          <button type="button" data-lens="kind" class="active">kind</button>
+          <button type="button" data-lens="comp">component</button>
+          <button type="button" data-lens="off">off</button>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="hl t-bug">bug</span><span class="hl t-feature">feature</span><span class="hl t-docs">docs</span><span class="hl t-question">question</span><span class="hl t-chore">chore</span>
+        <span class="faint small">· click any part to see its numbers</span>
+      </div>
+      <div id="sheet" class="sheet"></div>
+      <aside id="inspector" class="inspector" hidden></aside>
+      <p id="usage" class="usage faint"></p>
+    </article>
+    <div class="cards">
+      <div id="cards" class="cards"></div>
+      <div id="knobs"></div>
+      <div id="trace"></div>
+      <div id="raw"></div>
+    </div>
+  </main>
+
+  <footer class="foot faint">
+    Read-only. Labels already on an issue and bot comments are kept out of what Jev sees.
+    Built on <a href="https://docs.typesafe.ai">TypeSafe</a>.
+  </footer>
+</div>
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
