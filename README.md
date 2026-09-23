@@ -48,6 +48,17 @@ difficulties, and `duel bench` says which of them actually scores.
 > The step that matters isn't a bigger model — it's `board.py` counting what a player counts
 > and saying it in words.
 
+### [tetris-laya](examples/tetris-laya) — the same duel, with a local model playing
+
+The tetris duel's board, house rules and arcade, with
+[Laya](https://huggingface.co/convaiinnovations/laya-multilingual) answering on your own
+machine instead of Jev over the API. It carries torch, so it stays out of the root sync:
+`uv sync --all-packages`, and `uv run duel serve` then offers Laya as well as Jev: pick
+Jev vs Laya, Laya vs you, or any other matchup on the page.
+
+> A 256-token option budget against a 34-landing menu: the menu runs as heats, and the
+> winners meet in a final.
+
 ## What they have in common
 
 Different domains, same three moves. Reading one example teaches you the other two.
@@ -94,5 +105,18 @@ almost always the one you want — no key required to experiment there.
 Each example's README goes deeper: what Jev is asked, what the code does with the answers,
 and — in tetris-duel — a question that had to be rewritten before it said anything at all.
 Those post-mortems are the most useful pages here.
+
+### The browser side
+
+Each web UI is TypeScript in its example's `web/src/`, split into small modules — an `api.ts`
+that types every request, one module per part of the page, and a `main.ts` that only wires
+them together. There is no bundler: `tsc` compiles to plain ES modules in the package's
+`static/js/`, which the browser loads directly. That output is committed, so the examples run
+without Node; you only need it to change the UI:
+
+```bash
+pnpm install
+pnpm build        # or: pnpm watch
+```
 
 Python 3.12+, `uv`, and a key. Have fun.
