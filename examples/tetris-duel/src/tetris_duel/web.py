@@ -16,7 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .board import HEIGHT, SHAPES, WIDTH
-from .duel import GameOver, as_payload, play_piece
+from .duel import GameOver, play_piece
+from .payload import as_payload
 from .engine import EngineError
 from .pilot import DIFFICULTIES
 

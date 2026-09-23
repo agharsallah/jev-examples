@@ -9,7 +9,7 @@ from typing import Annotated
 import typer
 
 from . import render
-from .duel import self_play
+from .selfplay import self_play
 from .engine import EngineError
 from .pilot import BY_KEY, DEFAULT, DIFFICULTIES
 
